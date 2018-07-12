@@ -23,14 +23,14 @@ from model.reflections import ReflectionMeasurement, Reflection, ReflectionRealM
 #================================================================================
 #================================================================================
 #================================================================================
-[wxID_PANELREFLECTIONINFO, wxID_PANELREFLECTIONINFOSCROLLEDWINDOWMEASUREMENTS, 
- wxID_PANELREFLECTIONINFOSTATICTEXTDLABEL, 
- wxID_PANELREFLECTIONINFOSTATICTEXTHKLLABEL, 
- wxID_PANELREFLECTIONINFOSTATICTEXTQLABEL, 
- wxID_PANELREFLECTIONINFOSTATICTEXTTIMESMEASURED, 
- wxID_PANELREFLECTIONINFOTEXTCTRLDSPACING, wxID_PANELREFLECTIONINFOTEXTCTRLH, 
- wxID_PANELREFLECTIONINFOTEXTCTRLK, wxID_PANELREFLECTIONINFOTEXTCTRLL, 
- wxID_PANELREFLECTIONINFOTEXTCTRLQ, 
+[wxID_PANELREFLECTIONINFO, wxID_PANELREFLECTIONINFOSCROLLEDWINDOWMEASUREMENTS,
+ wxID_PANELREFLECTIONINFOSTATICTEXTDLABEL,
+ wxID_PANELREFLECTIONINFOSTATICTEXTHKLLABEL,
+ wxID_PANELREFLECTIONINFOSTATICTEXTQLABEL,
+ wxID_PANELREFLECTIONINFOSTATICTEXTTIMESMEASURED,
+ wxID_PANELREFLECTIONINFOTEXTCTRLDSPACING, wxID_PANELREFLECTIONINFOTEXTCTRLH,
+ wxID_PANELREFLECTIONINFOTEXTCTRLK, wxID_PANELREFLECTIONINFOTEXTCTRLL,
+ wxID_PANELREFLECTIONINFOTEXTCTRLQ,
 ] = [wx.NewId() for _init_ctrls in range(11)]
 
 class PanelReflectionInfo(wx.Panel):
@@ -55,7 +55,7 @@ class PanelReflectionInfo(wx.Panel):
         self.boxSizerDivergence.AddWindow(self.staticDivergenceLabel2, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
         parent.AddSpacer(wx.Size(8.8))
         parent.AddWindow(self.checkUseEquivalent, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
-        
+
     def _init_coll_boxSizerAll_Items(self, parent):
         parent.AddSizer(self.flexGridSizerTop, 0, border=3,
               flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM | wx.EXPAND)
@@ -233,7 +233,7 @@ class PanelReflectionInfo(wx.Panel):
             scrollwin.SetAutoLayout(True)
             scrollwin.EnableScrolling(False, True)
             scrollwin.SetScrollRate(5, 10)
-            
+
         self.boxSizerScrollWindow.SetVirtualSizeHints(self.scrolledWindowMeasurements)
     ##        scrollwinself.boxSizerAll.SetSize((660, 400))
 
@@ -261,7 +261,7 @@ class PanelReflectionInfo(wx.Panel):
         model.messages.unsubscribe(self.update_data)
 
     #----------------------------------------------------------------------------------------------
-    def update_data(self, *args):
+    def update_data(self):
         """Called when the reflections have been re-calculated."""
         if not self.refl is None:
             (h,k,l) = self.refl.hkl
@@ -305,7 +305,7 @@ class PanelReflectionInfo(wx.Panel):
             real_mode: bool, True to do the real measurements, false for the predicted ones.
         """
         #@type refl Reflection
-        
+
         for real_mode in [False, True]:
 
             #Settings to reuse
@@ -361,7 +361,7 @@ class PanelReflectionInfo(wx.Panel):
                 s = "As HKL %d,%d,%d:" % refl.hkl
                 if num_measurements == 0:
                      s += [" (not predicted)",  " (not measured)"][real_mode]
-                    
+
                 txt = wx.StaticText(parent=scrollwin, label=s)
                 self.hkl_static_texts[real_mode].append(txt)
                 #Slip it in the right spot
@@ -412,7 +412,7 @@ class PanelReflectionInfo(wx.Panel):
             scrollwin.Layout()
             self.Update()
 
-        
+
 
     #----------------------------------------------------------------------------------
     def set_hkl(self, h, k, l, update_textboxes=True):
@@ -434,7 +434,7 @@ class PanelReflectionInfo(wx.Panel):
             update_textboxes: will set the value in the hkl textboxes
         """
         self._inside_set_reflection = True
-        
+
         self.refl = refl
         #Put the text in the boxes
         if update_textboxes:
@@ -444,7 +444,7 @@ class PanelReflectionInfo(wx.Panel):
                 else:
                     self.hkl_textCtls[i].SetValue( "%d" % ( refl.hkl[i] ) )
 
-                
+
         #Rest of the GUI
         if refl is None:
             self.textCtrlDspacing.SetValue( "None" )
@@ -470,7 +470,7 @@ class PanelReflectionInfo(wx.Panel):
         #Avoid calling this at wrong times
         if self._inside_set_reflection:
             return
-        
+
         #Extract the hkl values, use a crazy number to signal a bad input
         hkl = [-10000000]*3
         for i in xrange(3):
@@ -498,7 +498,7 @@ class PanelReflectionInfo(wx.Panel):
             self.textCtrlDivergence.SetBackgroundColour(gui_utils.TEXT_BACKGROUND_COLOUR_GOOD)
         except ValueError:
             self.textCtrlDivergence.SetBackgroundColour(gui_utils.TEXT_BACKGROUND_COLOUR_BAD)
-            
+
     def OnButtonPlace(self, event):
         reflection_placer.show_placer_frame(self, self.refl, None)
         event.Skip()

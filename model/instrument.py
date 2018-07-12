@@ -19,7 +19,7 @@ import numpy as np
 from numpy import array, sin, cos, pi
 #import scipy.optimize
 import scipy
-from scipy import weave
+import weave
 import time
 import csv
 
@@ -89,7 +89,7 @@ class PositionCoverage:
             self.angles = list(angles.flatten())
         else:
             self.angles = angles
-            
+
         #3D array with the coverage; indices are x,y,z
         self.coverage = coverage
         #3x3 matrix describing the sample mounting orientation.
@@ -127,7 +127,7 @@ class PositionCoverage:
     #========================================================================================================
     def __eq__(self, other):
         return utils.equal_objects(self, other)
-        
+
 
 
 #========================================================================================================
@@ -156,7 +156,7 @@ class InstrumentParameters(HasTraits):
     d_min = Float(1)
     #d_max does not really have an effect here.
     d_max = Float(5.0)
-        
+
 
 #========================================================================================================
 #========================================================================================================
@@ -208,13 +208,13 @@ class Instrument:
 
         self.verbose = True
 
-        
+
     #========================================================================================================
     def __init__ (self, filename=None, params=dict()):
         """Create an instrument. Will load the geometry from a supplied CSV file."""
         #Create the default members
         self.initizalize()
-        
+
         if not (filename is None):
             self.load_detectors_file(filename)
         else:
@@ -251,7 +251,7 @@ class Instrument:
 
         #Things to NOT load; fix old files.
         exclude_list = ['qlim']
-        
+
         for (key, value) in d.items():
             if not (key in exclude_list):
                 setattr(self, key, value)
@@ -324,7 +324,7 @@ class Instrument:
             cylindrical = False
             if row[0].startswith("#Cyl"):
                 cylindrical = True
-                
+
             # Skip other comment rows
             while True:
                 row = reader.next()
@@ -335,7 +335,7 @@ class Instrument:
                         break
                 else:
                     break
-            
+
             count = 1
             for row in reader:
                 if cylindrical:
@@ -353,7 +353,7 @@ class Instrument:
                     #Calculate the pixel angles
                     det.calculate_pixel_angles()
                     self.detectors.append(det)
-                    
+
                 else:
                     # -------- Flat Detector ---------
                     number = round(float(row[0]))
@@ -373,7 +373,7 @@ class Instrument:
                         inuse = (float(row[8]) != 0)
                     except:
                         inuse = False
-                        
+
                     if (inuse):
                         #Calculate the pixel angles
                         det.calculate_pixel_angles()
@@ -433,7 +433,7 @@ class Instrument:
     #========================================================================================================
     def set_goniometer(self, gonio, different_angles=False):
         """Change the goniometer used by the instrument.
-        
+
         Parameters:
             gonio: a new Goniometer() class object.
             different_angles: bool, set to True if the angles are different in the new goniometer.
@@ -449,7 +449,7 @@ class Instrument:
         #Do we need to clear all the positions?
         if different_angles:
             self.positions = []
-                
+
 
     #========================================================================================================
     def change_qspace_size(self, params):
@@ -458,7 +458,7 @@ class Instrument:
         #Set these parameters
         self.set_parameters(params)
         print "change_qspace_size", params
-        
+
         #Start by recalculating the q-space array here.
         self.make_qspace()
 
@@ -499,7 +499,7 @@ class Instrument:
             #Also add the original index to keep the sort stable.
             sort_list += [i]
             decorated.append( tuple(sort_list + [poscov]) )
-            
+
         decorated.sort(reverse=(not ascending))
         #Save it back in the array
         self.positions[:] = [x[-1] for x in decorated]
@@ -523,26 +523,26 @@ class Instrument:
                             sample_U_matrix=new_sample_U_matrix)
         #And make sure to save the U matrix (changed or not)
         poscov.sample_U_matrix = new_sample_U_matrix
-        
+
 
     #========================================================================================================
     def evaluate_position_list(self, angles_lists, ignore_gonio):
         """Given lists of phi, chi, omega angles to loop through, check
         that each combination is possible given the goniometer.
-        
+
             angles_lists: list of lists of angles. There are as many lists as there are angles in
                 instrument.angles: e.g. 3 for phi, chi, omega.
                 Angles are in internal units.
             ignore_gonio: set to True to ignore any goniometer limitations.
-            
+
         returns (valid, redundant, invalid, invalid_reason):
             valid: list of [phi, chi, omega] angles that are valid
             redundant: list of redundant angles
             invalid: list of invalid (unreachable) angles
             invalid_reason: list of strings describing the reason of each invalid angle
-                
+
         """
-        
+
         valid = list()
         invalid = list()
         redundant = list()
@@ -583,12 +583,12 @@ class Instrument:
                     i += 1
                 else:
                     break
-                    
+
             #If all the indices are zero, we have wrapped back to the start. Stop looping
             if all( indices==0 ):
                 break
 
-     
+
         return (valid, redundant, invalid, invalid_reason)
 
 
@@ -601,7 +601,7 @@ class Instrument:
             datatype: specify the datatype to use, e.g. numpy.int64
             Returns: the 3D array.
         """
-        if self.qx_list is None:  
+        if self.qx_list is None:
             warnings.warn("instrument.make_blank_qspace(): called before instrument was properly initialized. Call make_qspace() first!")
             return None
         #Find the size and make the array
@@ -610,11 +610,11 @@ class Instrument:
             return np.zeros( (n,n,n,number_of_ints), dtype=datatype )
         else:
             return np.zeros( (n,n,n), dtype=datatype )
-    
+
 
     #-------------------------------------------------------------------------------
     def make_qspace(self):
-        """Generate an evenly-spaced q-space map using the settings and limits 
+        """Generate an evenly-spaced q-space map using the settings and limits
         given in the object."""
 
         #Limit to q volume given the d_min
@@ -664,7 +664,7 @@ class Instrument:
                 //return q_out;
             }
             """
-            
+
     _code_calculate_coverage = """
             //Loop through pixels using the list given before.
             for (int iix = 0; iix < xlist.length(); iix++)
@@ -750,7 +750,7 @@ class Instrument:
                                         {
                                             COVERAGE4(iqx,iqy,iqz,0) |= set_value1;
                                         }
-                  
+
                                     }
                                 }
                             }
@@ -854,7 +854,7 @@ class Instrument:
 
             #Find the wavelength range to use
             (wl_min, wl_max) = self.get_wavelength_range(angles)
-            
+
             #Two nearby pixels
             q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], wl_min, rot_matrix)
             q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], wl_min, rot_matrix)
@@ -982,15 +982,15 @@ class Instrument:
                 value = self.positions[-1].criterion_value
         return (criterion, value)
 
-    
+
     #========================================================================================================
     def get_position_num(self, num):
-        """Return the PositionCoverage object # num in the list of saved positions, or None if 
+        """Return the PositionCoverage object # num in the list of saved positions, or None if
         out of bounds."""
         if num < 0 or num >= len(self.positions):
             return None
         return self.positions[num]
-    
+
     #========================================================================================================
     def get_position_by_id(self, poscovid):
         """Return the PositionCoverage object that matches the given poscovid id number,
@@ -1020,7 +1020,7 @@ class Instrument:
 
         #Send messages, but not too frequently.
         messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating %s%s..." % (angles_string,ump))
-            
+
         t1 = time.time()
         coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix)
         if self.verbose:
@@ -1056,7 +1056,7 @@ class Instrument:
         t1 = time.time()
         #Create the q-space
         coverage = self.make_blank_qspace(np.int16)
-        
+
         #Error checking
         if self.positions is None: return None
 
@@ -1109,7 +1109,7 @@ class Instrument:
         else:
             #--- Inline C version ---
             #   about 70x faster than the python version.
-            coverage_size = coverage.size 
+            coverage_size = coverage.size
             num_coverage = len(coverage_list)
             support = ""
             code = """
@@ -1209,7 +1209,7 @@ class InstrumentInelastic(Instrument):
 
             double lim_min = -qlim;
             double lim_max = +qlim;
-            
+
             //Loop through pixels using the list given before.
             for (int iix = 0; iix < xlist.length(); iix++)
             {
@@ -1272,7 +1272,7 @@ class InstrumentInelastic(Instrument):
                         q_diff_unrot[i] = q_max_unrot[i] - q_min_unrot[i];
                         q_length += q_diff[i]*q_diff[i];
                     }
-                    
+
                     //Find out how long of a line that is
                     q_length = sqrt(q_length);
 
@@ -1288,7 +1288,7 @@ class InstrumentInelastic(Instrument):
                         dx = q_diff[0] / numfrac;
                         dy = q_diff[1] / numfrac;
                         dz = q_diff[2] / numfrac;
-                        
+
                         double dx_unrot, dy_unrot, dz_unrot;
                         dx_unrot = q_diff_unrot[0] / numfrac;
                         dy_unrot = q_diff_unrot[1] / numfrac;
@@ -1330,18 +1330,18 @@ class InstrumentInelastic(Instrument):
                                         // Get the energy. The constant sets the units (to meV)
                                         E = energy_constant * (kf_squared - ki_squared);
 
-                                        COVERAGE3(iqx,iqy,iqz) = E; 
+                                        COVERAGE3(iqx,iqy,iqz) = E;
                                     }
                                 }
                             }
-                            
+
                         } //for i in numfrac
                     } //numfrac > 0 so we can draw the line
 
                 } //for iiy
             }
             """
-            
+
     #========================================================================================================
     def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
         """This method finds the coverage of all detectors in a full 3D matrix by drawing
@@ -1420,11 +1420,11 @@ class InstrumentInelastic(Instrument):
 
         #Start with +(Large Number) everywhere
         coverage = self.make_blank_qspace(np.float) + 1e6
-        
+
         count = 0
         if self.verbose:
             sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
-            
+
         for det in det_list:
             #Make sure the detector object is valid
             if det is None:
@@ -1664,13 +1664,13 @@ class InstrumentFourCircle(Instrument):
 
         #Init the base instrument with no file
         Instrument.__init__(self, None, dict())
-        
+
         # Input wavelength in angstroms
         self.wl_input = 1.01
 
         self.wl_min = 0.95
         self.wl_max = 1.05
-        
+
         # Add the single pixel detector
         #Dimensions in mm
         #@type det FlatDetector
@@ -1699,8 +1699,8 @@ class InstrumentFourCircle(Instrument):
 
 
 
-             
-    
+
+
 #==============================================================================
 inst = Instrument
 
@@ -1798,7 +1798,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
 
         #Keep going
         self.do_calculate_coverage(more_det=False)
-        
+
 
     def test_double_creation(self):
         assert len(self.tst_inst.detectors) == 14, "Correct # of detectors after first creation"
@@ -1830,7 +1830,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         if more_det: my_nums += [30, 31, 32, 45]
         for x in my_nums:
             det_list[x] = tst_inst.detectors[x]
-            
+
         for use_inline_c in [True, False]:
             #Calculate it (using C)
             msg = ["(python only)", "(inline C"][use_inline_c]
@@ -1858,7 +1858,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         tst_inst.positions = []
         tst_inst.make_qspace()
         assert not hasattr(tst_inst, 'qspace'), "Instrument should not have a qspace field (anymore)."
-        
+
         phi_list = np.deg2rad([0, 45, 90, 135])
         (valid, redundant, invalid, invalid_reason) = tst_inst.evaluate_position_list([ phi_list, [0], [0] ], ignore_gonio=True)
         assert len(valid) == 4, "evaluate_position_list valid entries."
@@ -1933,7 +1933,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
     def test_load_detcal(self):
         self.tst_inst = Instrument("../instruments/TOPAZ_2010_06_08.detcal")
 
-        
+
 
 
 
@@ -1954,7 +1954,7 @@ class TestFourCircleInstrument(unittest.TestCase):
         #@type ti InstrumenFourCircle
         ti = self.tst_inst
         assert len(ti.detectors) == 1
-        
+
 #==================================================================
 class TestImagine(unittest.TestCase):
     """Unit test for the 4-circle class."""
@@ -1970,27 +1970,27 @@ class TestImagine(unittest.TestCase):
         #@type ti InstrumenFourCircle
         ti = self.tst_inst
         assert len(ti.detectors) == 4
-        
+
     def test_calculate_coverage(self):
         tst_inst = self.tst_inst
         self.assertRaises(ArgumentError, tst_inst.calculate_coverage, [], [1, 2])
         self.assertRaises(ArgumentError, tst_inst.calculate_coverage, None, [1, 2, 3, 4])
 
-        # Intialize        
+        # Intialize
         tst_inst.make_qspace()
 
         #Only one detector
         det_list = [tst_inst.detectors[0]]
         # Phi = 0
         angles = [0]
-            
+
         for use_inline_c in [False, True]:
             #Calculate it (using C)
             msg = ["(python only)", "(inline C)"][use_inline_c]
             ret = tst_inst.calculate_coverage(det_list, angles, use_inline_c=use_inline_c)
             assert np.any(ret == 1), "Coverage %s has some bits equal to 1." % msg
             if use_inline_c: c_ret = ret
-            
+
         #Find differences
         (x,y,z,byte) = np.nonzero(ret != c_ret)
         assert len(x) < 20, "Coverage calculated by C and python match within 20 differences. We found %s differences" % len(x)

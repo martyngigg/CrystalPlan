@@ -63,7 +63,7 @@ class DetectorVisualization(HasTraits):
     #3D view of the scene.
     view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), resizable=True,
                     show_label=False), resizable=True)
-                    
+
     def __init__(self):
         # Do not forget to call the parent's __init__
         HasTraits.__init__(self)
@@ -89,7 +89,7 @@ class DetectorVisualization(HasTraits):
             lines(points, color=col, tube_radius=rad, mlab=self.scene.mlab)
             points = [det.pixels[:, -1, -1], det.pixels[:, 0, -1]]
             lines(points, color=col, tube_radius=rad, mlab=self.scene.mlab)
-            
+
         #Plot the normal, out of the center
 #        lines([det.base_point.flatten(), (det.base_point+det.normal*det.width/2).flatten()], color=col, tube_radius=rad, mlab=self.scene.mlab)
         #Find the middle and put text there
@@ -103,8 +103,8 @@ class DetectorVisualization(HasTraits):
         mlab = self.scene.mlab
         self.scene.disable_render = True #Render without displaying, to speed it up.
         mlab.clf()
-        mlab.plot3d([0,1], [0,1], [0,1]) 
-    
+        mlab.plot3d([0,1], [0,1], [0,1])
+
         mlab.options.offscreen = False
         #Make a simple color map
         c = 0
@@ -148,7 +148,7 @@ class DetectorVisualization(HasTraits):
 #================================================================================================
 class DetectorView3D(wx.Frame):
     """Frame that will hold a 3D view of all the detectors."""
-                    
+
     #---------------------------------------------------------------------------------------------
     def __init__(self, parent, id):
         wx.Frame.__init__(self, parent, id, 'Direct Space 3D View of Detectors', size=wx.Size(600, 500),
@@ -256,7 +256,7 @@ class DetectorListController:
         """Display the detector list"""
         #Make the list
         items = list()
-        
+
         #Do we display the detector coverage?
         use_coverage = False
         if not (self.detector_coverage is None):
@@ -268,10 +268,10 @@ class DetectorListController:
             s = "%7s" % (det.name)
             if use_coverage: s = s + (" : %6.2f%%" % self.detector_coverage[i])
             items.append(s)
-            
+
         #Sets the list in a single shot.
         self.lst.Set(items)
-        
+
         #Check the boxes as appropriate
         for x in range(len(model.instrument.inst.detectors)):
             #Look up which have been selected in the latest parameters
@@ -292,7 +292,7 @@ class DetectorListController:
         detlist = list()
         for x in range(self.lst.GetCount()):
             detlist.append(self.lst.IsChecked(x))
-        
+
         det = model.experiment.ParamDetectors(detlist)
         #Save that object as the parameter to change
         display_thread.NextParams[model.experiment.PARAM_DETECTORS] = det
@@ -320,7 +320,7 @@ class DetectorListController:
     def select_detector_list(self, det_list):
         """Select a list of detectors.
         det_list: 1-based list of detector numbers."""
-        
+
         #Check or uncheck as needed
         count = 0
         for x in range(self.lst.GetCount()):
@@ -328,7 +328,7 @@ class DetectorListController:
 
         #Redo the list
         self.changed()
-        
+
     #----------------------------------------------------------------------------------------
     def select_best_detectors(self, num):
         """Sort the coverage of each detector and pick the best 'num' values."""
@@ -372,11 +372,11 @@ class DetectorListController:
 
 
 #================================================================================================
-[wxID_PANELDETECTORS, wxID_PANELDETECTORSBUTTONOPTIMIZE, 
- wxID_PANELDETECTORSBUTTONSELECTBEST, wxID_PANELDETECTORSBUTTONSELECTLIST, 
- wxID_PANELDETECTORSBUTTONSTATS, wxID_PANELDETECTORSBUTTON_VIEW_DETECTORS, 
- wxID_PANELDETECTORSCHECKSELECTALL, wxID_PANELDETECTORSCHKLISTDETECTORS, 
- wxID_PANELDETECTORSSTATICTEXT1, 
+[wxID_PANELDETECTORS, wxID_PANELDETECTORSBUTTONOPTIMIZE,
+ wxID_PANELDETECTORSBUTTONSELECTBEST, wxID_PANELDETECTORSBUTTONSELECTLIST,
+ wxID_PANELDETECTORSBUTTONSTATS, wxID_PANELDETECTORSBUTTON_VIEW_DETECTORS,
+ wxID_PANELDETECTORSCHECKSELECTALL, wxID_PANELDETECTORSCHKLISTDETECTORS,
+ wxID_PANELDETECTORSSTATICTEXT1,
 ] = [wx.NewId() for _init_ctrls in range(9)]
 
 class PanelDetectors(wx.Panel):
@@ -450,7 +450,7 @@ class PanelDetectors(wx.Panel):
         self.chklistDetectors = wx.CheckListBox(choices=[],
               id=wxID_PANELDETECTORSCHKLISTDETECTORS, name=u'chklistDetectors',
               parent=self, pos=wx.Point(0, 99), size=wx.Size(512, 412),
-              style=wx.NO_3D)
+              style=wx.SP_3D)
         self.chklistDetectors.SetMinSize(wx.Size(20, 40))
         self.chklistDetectors.SetFont(wx.Font(10, 76, wx.NORMAL, wx.NORMAL,
               False, u'Monospace'))
@@ -519,7 +519,7 @@ class PanelDetectors(wx.Panel):
             #Just update
             #self.frame3d.update(reset_view=False)
         if not event is None: event.Skip()
-        
+
     def OnChklistDetectorsChecklistbox(self, event):
         self.controller.changed()
         event.Skip()

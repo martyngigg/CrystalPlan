@@ -8,6 +8,8 @@ Includes GUI launcher, logger, error handler."""
 
 #--- General Imports ---
 from __future__ import with_statement
+from traits.etsconfig.api import ETSConfig
+ETSConfig.toolkit = 'wx'
 import sys
 import os
 import os.path
@@ -17,7 +19,7 @@ from optparse import OptionParser
 import wx
 
 
-   
+
 
 
 #-------------------------------------------------------------------------
@@ -133,10 +135,10 @@ def launch_gui(inelastic, hb3a):
         """
 
     import CrystalPlan_version
-        
+
     #Since imports take a while, print out this status line first.
     print "-------------- %s %s GUI is starting -----------------" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
-    
+
     #--- GUI Imports ---
     import display_thread
     import wx
@@ -151,7 +153,7 @@ def launch_gui(inelastic, hb3a):
     #Attach our exception hook
     sys.excepthook = excepthook
 
-    
+
     #TODO: Here pick the latest instrument, load other configuration
     #Make the goniometers
     model.goniometer.initialize_goniometers()
@@ -171,7 +173,7 @@ def launch_gui(inelastic, hb3a):
         model.instrument.inst = model.instrument.Instrument(model.config.cfg.default_detector_filename)
         g = model.goniometer.TopazAmbientGoniometer(wavelength_control=False)
         model.instrument.inst.set_goniometer(g)
-        
+
     model.instrument.inst.make_qspace()
 
     #Initialize the instrument and experiment

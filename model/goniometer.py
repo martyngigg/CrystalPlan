@@ -21,7 +21,7 @@ from string import replace, strip, find
 import numpy as np
 from numpy import array, sin, cos, pi, dot
 import scipy.optimize
-from scipy import weave
+import weave
 
 #--- Model Imports ---
 import numpy_utils
@@ -73,7 +73,7 @@ def csv_friendly_string(input):
 #            #Found a non-alphanumeric character
 #            s = '"' + s + '"'
 #            break
-            
+
     return s
 
 #===============================================================================================
@@ -266,7 +266,7 @@ class Goniometer(HasTraits):
 
     def __ne__(self,other):
         return not self.__eq__(other)
-    
+
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):
         """Constructor.
@@ -388,7 +388,7 @@ class Goniometer(HasTraits):
         """
         (phi, chi, omega) = angles[0:3]
         return numpy_utils.rotation_matrix(phi, chi, omega)
-    
+
 
     #-------------------------------------------------------------------------
     def calculate_angles_to_rotate_vector(self, starting_vec, ending_vec, starting_angles=None, search_method=0):
@@ -544,7 +544,7 @@ class Goniometer(HasTraits):
 class LimitedGoniometer(Goniometer):
     """Class for goniometers where there are limits to the range of phi, chi, and/or omega
     values. Holds general-purpose code for finding valid sample orientations."""
-    
+
     name = String("Limited Goniometer")
     description = String("Goniometer with 3 degrees of freedom but restrictions to allowed angles.")
 
@@ -567,7 +567,7 @@ class LimitedGoniometer(Goniometer):
         """
         ret = True
         reason = ""
-        all_angle_infos = self.get_angles() 
+        all_angle_infos = self.get_angles()
 
         for i in xrange(len(angles)):
             #@type AngleInfo ai
@@ -742,7 +742,7 @@ class LimitedGoniometer(Goniometer):
             else { return value; }
         }
         """
-        
+
         #Add the function for the fitness
         support += self.get_fitness_function_c_code()
 
@@ -803,7 +803,7 @@ class LimitedGoniometer(Goniometer):
                 chi = 0.0;
                 phi = atan2(nx, nz);
                 omega = 0.0;
-            }            
+            }
             else if (absolute(vy+1) < 1e-8)
             {
                 //#Chi rotation is 180 degrees
@@ -871,7 +871,7 @@ class LimitedGoniometer(Goniometer):
         chi_list = []
         phi_list = []
         omega_list = []
-       
+
         #Prepare variables, run the C code
         varlist = ['rot_angle_list', 'ending_vec', 'initial_rotation_matrix', 'fitnesses', 'chi_list', 'phi_list', 'omega_list']
         ret = weave.inline(code, varlist, compiler='gcc', support_code=support)
@@ -967,7 +967,7 @@ class LimitedGoniometer(Goniometer):
         if search_method:
             #--- scipy optimize ----
 
-            # Get a starting point by brute force 
+            # Get a starting point by brute force
             step = np.deg2rad(2)
             (best_rot_angle, best_angles) = optimize_c_code(-2.2*pi, pi*2.2, step)
 
@@ -1159,9 +1159,9 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
             return None
         else:
             (phi, chi, omega) = best_angles
-            
+
             if not np.abs(chi - np.deg2rad(self.chi)) < 0.5/57:
-                # Have some tolerance (1 deg) in chi to help find anything. 
+                # Have some tolerance (1 deg) in chi to help find anything.
                 return None
             else:
                 #Okay, we found a decent chi
@@ -1195,7 +1195,7 @@ class MandiGoniometer(LimitedGoniometer):
         self.name = "Mandi goniometer"
         self.description = "Mandi goniometer with one degree of freedom (phi), with chi fixed at 130 degrees and omega at 90 degrees."
 
-        #Chi is +130 degrees 
+        #Chi is +130 degrees
         self.chi = +130.0
         chi = np.deg2rad(self.chi)
         a= np.deg2rad(self.chi)
@@ -1223,7 +1223,7 @@ class MandiGoniometer(LimitedGoniometer):
             FLOAT fitness = absolute(phi);
             return fitness;
         }
-        """ 
+        """
         return s
 
 
@@ -1305,7 +1305,7 @@ class MandiGoniometer(LimitedGoniometer):
 class MandiVaryOmegaGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."""
 
-    #Chi is +130 degrees 
+    #Chi is +130 degrees
     chi = Float(+130.0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
@@ -1323,7 +1323,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
         self.name = "MandiVaryOmega Goniometer"
         self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +135 degrees."
 
-        #Chi is +130 degrees 
+        #Chi is +130 degrees
         self.chi = +130.0
 
         #Make the angle info object
@@ -1454,7 +1454,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
 class ImagineGoniometer(LimitedGoniometer):
     """Goniometer for IMAGINE instrument. Totally free in phi rotation, no freedom otherwise"""
 
-    #Chi is 0 
+    #Chi is 0
     chi = Float(0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
@@ -1495,7 +1495,7 @@ class ImagineGoniometer(LimitedGoniometer):
             FLOAT fitness = absolute(phi);
             return fitness;
         }
-        """ 
+        """
         return s
 
 
@@ -1996,7 +1996,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         LimitedGoniometer.__init__(self, *args, **kwargs)
-        
+
         #Make the arrays with the XY limits of leg movement
         self.calculate_leg_xy_limits(visualize=False)
         #Make the angle info object
@@ -2056,12 +2056,12 @@ class TopazInHouseGoniometer(LimitedGoniometer):
            self: goniometer object containing all parameters.
            phi, chi, omega: angles (in radians) corresponding to ISAW standard
                            rotations.
-        
+
            Movements are performed in this (virtual) order:
                1. Rotation of the sample phi motor.
                2. Translation to bring sample into beam position.
                3. Movement (tilting) of the sample plate by moving the legs.
-        
+
         Fields set in the goniometer object:
             angles: array with all 3 angles.
             sample_plate: position of the legs on the sample (movable) plate.
@@ -2092,7 +2092,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         #But we have to correct for the sample motor phi rotation by rotating the translation
         #vector as well.
         translate_v = np.dot(rot_M_motor, translate_v)
-        
+
 
         #------------------ SAMPLE PLATE ----------------------
         #3 vectors representing the position of the mounting points on the plate,
@@ -2124,7 +2124,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 
         #------------------ APPLY TRANSFORMS ----------------------
         #For the sample plate: we do not apply the motor_phi rotation.
-        
+
         #Do a translation of the position - we are moving the entire sample plate
         #   This places the sample in the 0,0,0 position.
         sample_plate = get_translated_vectors(sample_plate_zero, translate_v)
@@ -2161,7 +2161,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 
         #We also know the height of all these points, y = fixed_plate_height.
         fixed_plate[COORD_Y, :] = self.fixed_plate_height
-      
+
         #This leaves x_A1, x_B1, and z_C1 to find.
 
         #Angle between the x direction and the (A1 to A2) vector formed by leg A
@@ -2169,7 +2169,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         if theta_A > -pi / 2:
             #Force theta_A to be ~-120 degrees
             theta_A = -pi - theta_A
-        
+
 
         #Angle between the x direction and the B1 to B2) vector formed by leg B
         theta_B = np.arcsin((sample_plate[COORD_Y, MOUNT_B] - self.fixed_plate_height) / self.leg_length)
@@ -2211,7 +2211,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         This will eventually be replaced with experimentally-determined values.
 
             visualize: Plot the resulting map."""
-           
+
         #Find the fixed plate position at the "0" point
         gonio_zero = copy.copy(self)
         gonio_zero.relative_sample_position = column([0.0, 0.0, 0.0]) #Tell the sample to be centered well.
@@ -2219,13 +2219,13 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         fixed_plate_zero = np.copy(gonio_zero.fixed_plate)
         #This defines the center of the following matrices
         self.fixed_plate_zero = fixed_plate_zero
-        
+
         #Now we generate a matrix of allowed positions around those points.
         self.leg_safe_xaxis = np.arange(-self.travel, self.travel, self.leg_safe_resolution)
         self.leg_safe_zaxis = np.copy(self.leg_safe_xaxis)
 
         #Create the "safe zone" array, initialized to False
-        self.leg_safe_zone = np.zeros( (3, self.leg_safe_xaxis.size, self.leg_safe_zaxis.size), dtype=bool ) 
+        self.leg_safe_zone = np.zeros( (3, self.leg_safe_xaxis.size, self.leg_safe_zaxis.size), dtype=bool )
 
         #Now make a reasonable approximation
         real_travel_x = 12.5
@@ -2263,7 +2263,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
     def check_limits(self):
         """Check that the leg positions in self.fixed_plate are within the limits previously
         calculated using self.calculate_leg_xy_limits().
-        
+
             This sets the self.leg_fault array of booleans to True for each leg outside of its allowed
         range."""
 
@@ -2287,15 +2287,15 @@ class TopazInHouseGoniometer(LimitedGoniometer):
     #===============================================================================================
     def calculate_allowable_angles(self, angular_resolution=0.01, visualize=0, optimized=False):
         """Calculate a map of allowed phi, chi, omega angles.
-        
+
             angular_resolution: angle to use as the grid size (rad)
             visualize: set to 1 or 2 to plot the results in 2D or 3D.
-            optimized: use simple optimization to reduce calculation time. Assumes that the 
+            optimized: use simple optimization to reduce calculation time. Assumes that the
                 shape of allowed angles is contiguous, which could be false for a custom-made
                 disallowed area!
         """
         #Could be optimized more, if required.
-        
+
         if visualize:
             pylab.ion() #Turns interaction on (?)
             print "Calculation started"
@@ -2360,7 +2360,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
             #(end of phi loop)
 
         print "Done!"
-                    
+
         if visualize==1:
             #2D Animated plot
             for i_phi in range(self.phi_list.size):
@@ -2377,7 +2377,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
                     pylab.draw()
             time.sleep(1)
             pylab.ion()
-            
+
 
         if visualize==2:
             #Single 3D plot of allowed angles.
@@ -2443,7 +2443,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 #                imagedata = np.copy(self.leg_safe_zone[leg, :, :])
 #                print imagedata
 #                mlab.imshow(imagedata, extent=extent)
-                
+
             #Clear all the plotobjects
             self._plot_sample_plate = None
             self._plot_fixed_plate = None
@@ -2488,7 +2488,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
     def animate(self, phi_list, chi_list, omega_list, delay=0.02):
         """Calculate and display the position of the goniometer. You need to have called
         plot_goniometer(first_plot=True) at least once before.
-        
+
             phi_list,chi_list,omega_list: lists of the angles (in radians) to use.
             delay: keep the image on for this many seconds.
         """
@@ -2566,7 +2566,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         #List has 6 elements
         return output
 
-    
+
     #===============================================================================================
     def csv_make_header(self, fileobj, title, comment=""):
         """Make the header text of the motor positions CSV file.
@@ -2646,10 +2646,10 @@ class HB3AGoniometer(LimitedGoniometer):
             double center = 3.14159*25.0/180.0;
             double omegadiff = omega - center;
             if (omegadiff < 0) omegadiff = -omegadiff;
-             
+
             //if (omegadiff > center)
             // omegadiff = omegadiff + (omega-center) * 10.0;
-            
+
             return absolute(chi) + omegadiff + absolute(phi)/1000.0;
             //return absolute(chi) + omegadiff + absolute(phi);
         }
@@ -2840,7 +2840,7 @@ def test_plotting_and_others():
     g.calculate_leg_xy_limits(visualize=False)
 
     g.getplatepos(np.deg2rad(20), np.deg2rad(7), np.deg2rad(10))
-    return 
+    return
     #g.plot_goniometer(first_plot=True)
     #mlab.show()
 
@@ -2870,7 +2870,7 @@ def test_angle_finding():
     starting_vec = np.array([ 0.16222142,  0.16222142, -0.97332853])
     ending_vec = np.array([ 0.18198751,  0.15906953, -0.97034913])
     g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, starting_angles=None)
-    
+
     g = TopazAmbientGoniometer()
     starting_vec = np.array([  1.25663706e+00 , -7.69468277e-17,  -3.14159265e+00] )
     ending_vec = np.array([ 0.79397495,  1.34719908, -3.00056654])

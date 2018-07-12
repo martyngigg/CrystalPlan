@@ -52,9 +52,10 @@ class FunctionCall:
 
 
 #----------------------------------------------------------------------
-def send_message(message_id, data=None):
+def send_message(message_id, data={}):
     """Thread-safe replacement for pubsub sendMessage."""
-    wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
+    print message_id
+    wx.CallAfter(pub.sendMessage, message_id, **data)
 
 #----------------------------------------------------------------------
 def send_message_optional(object, message_id, data=None, delay=0.33):

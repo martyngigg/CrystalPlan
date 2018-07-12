@@ -46,7 +46,7 @@ class SliceControl(wx.PyControl):
                 The method should accept 3 arguments:
                     use_slice: boolean.
                     slice_min and slice_max: floats, the limits of the slice.
-            id: identifier. 
+            id: identifier.
             pos: position. If the position (-1, -1) is specified
                     then a default position is chosen.
             size: size. If the default size (-1, -1) is specified
@@ -54,7 +54,7 @@ class SliceControl(wx.PyControl):
             validator: Window validator.
             name: Window name.
         """
-        
+
         #Using the slicer mode?
         self.use_slice = use_slice
         #Method to call for events
@@ -436,14 +436,14 @@ class SliceControl(wx.PyControl):
             #Invalid data! Go away, or you get errors.
             dc.DrawText('Too few points in coverage slice; cannot plot.', 0,0)
             return
-        
+
         #Now draw the data
         x = self.data_x
         xrange = 1.
         yrange = 1.
         #Pen and brush colors
-        pen_colors = ['black', 'dark green', 'orange', 'dark orange']
-        brush_colors = ['cyan', 'light green', 'yellow', [235, 166, 5] ]
+        pen_colors = ['BLACK', 'DARK GREEN', 'ORANGE', 'ORANGE RED']
+        brush_colors = ['CYAN', 'LIME GREEN', 'YELLOW', [235, 166, 5] ]
 
         if not (x is None):
             #Lets figure out how much to scale in x and y
@@ -533,7 +533,7 @@ class SliceControl(wx.PyControl):
             #Draw the slicer thingie
             xmin = self.GetX(self.slice_min)
             xmax = self.GetX(self.slice_max)
-            dc.SetPen( pen=wx.Pen(colour='dark red', width=2, style=wx.SOLID) )
+            dc.SetPen( pen=wx.Pen(colour="ORANGE RED", width=2, style=wx.SOLID) )
             dc.SetBrush( brush=wx.Brush(colour=wx.Colour( 255,0,0), style=wx.CROSSDIAG_HATCH) )
             sl_width = (xmax-xmin)
             if sl_width < 4:
@@ -578,7 +578,7 @@ if __name__ == '__main__':
         data_y.append( data_x*0 )
     sc.SetData(data_x, data_y)
     sc.Refresh()
-    
+
     app.frame.SetClientSize(wx.Size(700,500))
     app.MainLoop()
 

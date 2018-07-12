@@ -9,7 +9,7 @@ Holds various useful functions for crystallography, like lattice calculations, e
 #--- General Imports ---
 import numpy as np
 from numpy import array, sin, cos, pi, sign
-from scipy import weave
+import weave
 
 #--- Model Imports ---
 import numpy_utils
@@ -59,7 +59,7 @@ def get_scattered_beam(hkl, rot_matrix, ub_matrix):
         q_vector = OMEGA . CHI . PHI . U . B . (hkl)
         q_vector = rot_matrix . ub_matrix . (hkl)
             (where the B matrix contains the 2*pi factor)
-    
+
     Known: the q-vector you want to detect. (qx, qy, qz) components of the vector
     Known: ki, the incident beam wave vector, is in the direction +Z, length 2pi/wavelength
     Unknown: wavelength
@@ -69,11 +69,11 @@ def get_scattered_beam(hkl, rot_matrix, ub_matrix):
 
     With some algebra, we find that
         2pi/wl = - norm(q)^2 / (2*qz)
-    So this goes into the kf_z = (qz+2pi/wl) 
+    So this goes into the kf_z = (qz+2pi/wl)
     """
     # Calculate the scattered q-vector.
     matrix = np.dot(rot_matrix, ub_matrix)
-    # This is the scattered Q in the L frame. 
+    # This is the scattered Q in the L frame.
     q_vector = np.dot(matrix, hkl)
     squared_norm_of_q = np.sum( q_vector**2, axis=0)
     # 2pi/wl = - norm(q)^2 / (2*qz)
@@ -145,7 +145,7 @@ def get_sample_rotation_matrix_to_get_beam(beam_wanted, hkl, ub_matrix, starting
     q_rotated = q_over_a * a
 
     #Find the rotation matrix that satisfies q_over_a = R_over_a . q0
-    
+
     #The cross product of q0 X q_over_a gives a rotation axis to use
     rotation_axis = np.cross(q0, q_over_a)
     #Normalize
@@ -268,7 +268,7 @@ def make_UB_matrix(lattice_lengths, lattice_angles, sample_phi, sample_chi, samp
                 4 - Do the omega rotation = around the Y axis again.
             For example, if 'a' is pointing up, use 0, +90, 0.
                 if 'a' is pointing down along the beam direction, use -90, 0, 0 (I think)
-                
+
         U_matrix : specify to use this U matrix instead of the angles
     """
     #Get the reciprocal vectors
@@ -282,7 +282,7 @@ def make_UB_matrix(lattice_lengths, lattice_angles, sample_phi, sample_chi, samp
     #Now lets make a rotation matrix U to account for sample mounting.
     #   We used the same set of phi,chi,omega rotations as for sample orientations.
     U = numpy_utils.rotation_matrix(sample_phi, sample_chi, sample_omega)
-    
+
     if not U_matrix is None:
         U = U_matrix
 
@@ -378,14 +378,14 @@ getq_code_header = """py::tuple getq(double wl_output, double az, double elevati
 {
     py::tuple return_val(3);
     double wl_input = wl_output;
-    
+
 """
 
 
 #Core code, common for both elastic and inelastic
 getq_code = """
     double r2, x, y, z;
-    
+
     // The scattered beam emanates from the centre of this spher.
     // Find the intersection of the scattered beam and the sphere, in XYZ
     // We start with an Ewald sphere of radius 1/wavelength
@@ -460,7 +460,7 @@ getq_inelastic_code = """
     q[5]=qz;
     return_val = q;
     """
-    
+
 getq_inelastic_code_footer = """
     return return_val;
 }
@@ -718,7 +718,7 @@ class TestCrystalCalc(unittest.TestCase):
     def test_getq_vs_get_scattered_beam(self):
         "test_getq_vs_get_scattered_beam: getq and get_scattered_beam should give compatible results."
         #Test depends on test_make_UB_matrix() and on test_get_q_from_hkl()
-        
+
         #Make up a simple lattice - cubic
         lat = ( 1.0,  1.0,  1.0)
         angles = tuple( np.deg2rad( [90, 90, 90]))
@@ -912,7 +912,7 @@ class TestCrystalCalc(unittest.TestCase):
 #        start_R = rotation_matrix(0,np.pi/4, 0)
 #        (R, wl) = get_sample_rotation_matrix_to_get_beam(beam_wanted, hkl, ub_matrix, start_R)
 #        assert np.allclose(R, np.array([[1,0,0],[0,0,1],[0,-1,0]])), "get_sample_rotation_matrix, with a starting matrix. We got %s" % R
-        
+
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":
@@ -921,7 +921,7 @@ if __name__ == "__main__":
 
     start = column([-1,0,0])
     print start
-    
+
     rot = np.dot(rot_matrix, start)
     print rot
     #unittest.main()

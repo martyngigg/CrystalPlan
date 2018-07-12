@@ -10,7 +10,7 @@ import warnings
 import numpy as np
 import time
 import threading
-import scipy.weave as weave
+import weave
 import scipy.ndimage
 from cPickle import loads, dumps
 import os
@@ -97,10 +97,10 @@ VALID_PARAMS = [PARAM_POSITIONS, PARAM_TRY_POSITION, PARAM_DETECTORS, PARAM_ENER
 class ParamsDict(dict):
     """Subclass of dictionary used to store the display paramters.
     Restricts inputs to valid keys."""
-    
+
     #Create a lock to avoid threading problems.
     _lock = threading.Lock()
-    
+
     def __init__(self, **kwargs):
         """Constructor."""
         dict.__init__(self, **kwargs)
@@ -120,14 +120,14 @@ class ParamsDict(dict):
             dict.__setitem__(self, key, value)
         finally:
             self._lock.release()
-            
+
     def __getitem__(self, key):
         """Override the getitem operator to return None when no entry
         exists, instead of throwing an error."""
         #But we can only ask keys that are valid.
         if key is None: raise KeyError("Key of None specificed.")
         if not (key in VALID_PARAMS):
-            raise KeyError("Unexpected key supplied!");      
+            raise KeyError("Unexpected key supplied!");
         try:
             return dict.__getitem__(self, key)
         except KeyError:
@@ -135,14 +135,14 @@ class ParamsDict(dict):
             #Other errors should be raised.
             return None
 
-        
+
 
 #========================================================================================================
 #========================================================================================================
-        
+
 #-------------------------------------------------------------------------------
 class Params:
-    """Empty base class for describing parameters for q-space coverage display and 
+    """Empty base class for describing parameters for q-space coverage display and
     calculation."""
 
     def __eq__(self, other):
@@ -151,27 +151,27 @@ class Params:
         if (other is None): return (self is None)
         return True
 
-    
-    
+
+
 #-------------------------------------------------------------------------------
 class ParamPositions(Params):
     """List of which positions to add up to calculate coverage."""
-    
+
     #self.positions is a dictionary.
     #   The key is the ID of the PositionCoverage object saved in the instrument object.
     #   The value is True or False, depending on whether that position is used
-    
+
     def __init__(self, pos_dict):
         if pos_dict is None:
             raise StandardError("ParamPositions constructor called with a None argument.")
         self.positions = pos_dict.copy()
-        
+
     def __eq__(self, other):
         """Equality (==) operator."""
         if (self is None): return (other is None)
         if (other is None): return (self is None)
         return (self.positions == other.positions)
-        
+
 
 #-------------------------------------------------------------------------------
 class ParamTryPosition(Params):
@@ -190,19 +190,19 @@ class ParamTryPosition(Params):
         if (self is None): return (other is None)
         if (other is None): return (self is None)
         if not self.use_trial and not other.use_trial: return True
-        return (self.try_position == other.try_position) and (self.use_trial == other.use_trial) 
+        return (self.try_position == other.try_position) and (self.use_trial == other.use_trial)
 
 
 #-------------------------------------------------------------------------------
 class ParamDetectors(Params):
     """List of which detectors to add up to calculate coverage."""
-    
+
     #Bool array of which of the detectors that will be used in the calculation.
     detectors = None
-        
+
     def __init__(self, detectors):
         self.detectors = detectors
-        
+
     def __eq__(self, other):
         """Equality (==) operator."""
         if (self is None): return (other is None)
@@ -219,7 +219,7 @@ class ParamDetectors(Params):
 #-------------------------------------------------------------------------------
 class ParamSymmetry(Params):
     """Consider crystal symmetry in q-space volume calculation?"""
-    
+
     def __init__(self, use_symmetry):
         #Whether or not you use symmetry
         self.use_symmetry = use_symmetry
@@ -235,17 +235,17 @@ class ParamSymmetry(Params):
 #-------------------------------------------------------------------------------
 class ParamInvert(Params):
     """Do you invert the coverage data to show gaps more easily?"""
-    
+
     def __init__(self, invert):
         #Whether or not you invert
         self.invert = invert
-        
+
     def __eq__(self, other):
         """Equality (==) operator."""
         if (self is None): return (other is None)
         if (other is None): return (self is None)
         return (self.invert == other.invert)
-   
+
 
 #-------------------------------------------------------------------------------
 class ParamSlice(Params):
@@ -516,7 +516,7 @@ class Experiment:
     def __init__(self, instrument_to_use):
         """Constructor. Subscribe to messages.
             inst: The instrument this experiment refers to."""
-            
+
         self.initialize()
 
         #Reference to the instrument
@@ -638,8 +638,8 @@ class Experiment:
         reflections_hkl[1, :] = np.tile( will_repeat, num_h)
         #Last axis (l) varies fastest. Repeat sequence over and over
         reflections_hkl[2, :] = np.tile(l_list, num_h*num_k)
-        
-        
+
+
         # Get a list of all the reflection conditions contained.
         rc_list = self.crystal.get_reflection_conditions()
         # Start with all true
@@ -647,10 +647,10 @@ class Experiment:
         for rc in rc_list:
             if not rc is None:
                 visible = visible & rc.reflection_visible_matrix(reflections_hkl)
-            
+
         # Take off anything not visible
         reflections_hkl = reflections_hkl[:,visible]
-        
+
         #Calculate all the q vectors at once
         all_q_vectors = np.dot(self.crystal.reciprocal_lattice, reflections_hkl)
         self.reflections_q_norm = np.sqrt(np.sum(all_q_vectors**2, axis=0))
@@ -760,7 +760,7 @@ class Experiment:
         if not hasattr(self, 'reflection_masked_index_to_real_index'):
             #No reflections have been masked yet.
             return None
-        
+
         if self.reflection_masked_index_to_real_index is None:
             return None
         if (id < 0) or (id >= len(self.reflection_masked_index_to_real_index) ):
@@ -781,7 +781,7 @@ class Experiment:
 
         if refl is None:
             return []
-        
+
         #If it has been previously calculated, just return it
         if not len(refl.equivalent)==0:
             return refl.equivalent
@@ -896,7 +896,7 @@ class Experiment:
                     refl.primary = primary_refl
                     #And the list of equivalent ones
                     refl.equivalent = equivalent_list
-                    
+
                 #Make sure the primary one is primary
                 primary_refl.is_primary = True
 
@@ -946,7 +946,7 @@ class Experiment:
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam, -np.inf, +np.inf)
         #Return the points positions
         return (h,v,wl)
-    
+
     #========================================================================================================
     #======================================= REFLECTION CALCULATIONS =====================================
     #========================================================================================================
@@ -1036,14 +1036,14 @@ class Experiment:
     def calculate_reflections_mask(self):
         """Generate a mask of which reflections will be displayed in 3D, based
         on the parameters saved."""
-        
+
         if self.reflections is None:
             return
 
         #Some checks.
         if self.reflections_times_measured is None:
             self.get_reflections_times_measured(None)
-            
+
         assert len(self.reflections_times_measured ) == len(self.reflections), "The list of reflections_times_measured should be the same length as the # of reflections."
         assert len(self.reflections_times_measured_with_equivalents ) == len(self.reflections), "The list of reflections_times_measured_with_equivalents should be the same length as the # of reflections."
 
@@ -1055,7 +1055,7 @@ class Experiment:
             mask = np.ones( (len(self.reflections), ), dtype=bool)
         else:
             #-- Yes, some parameters exist --
-            
+
             #Get the limits to slice to
             qmin = mask_param.slice_min
             qmax = mask_param.slice_max
@@ -1138,7 +1138,7 @@ class Experiment:
         self.reflections_times_measured_with_equivalents = rtme
         assert len(self.reflections_times_measured ) == len(self.reflections), "The list of reflections_times_measured should be the same length as the # of reflections."
         assert len(self.reflections_times_measured_with_equivalents ) == len(self.reflections), "The list of reflections_times_measured_with_equivalents should be the same length as the # of reflections."
-            
+
 
     #-------------------------------------------------------------------------------
     def get_reflections_measured(self, measured=True):
@@ -1359,7 +1359,7 @@ class Experiment:
 
         #And get some statistics
         self.calculate_reflection_coverage_stats()
-        
+
         if progress_dialog is None: print "Done!"
 
 
@@ -1525,7 +1525,7 @@ class Experiment:
     #========================================================================================================
     #======================================= VOLUME COVERAGE CALCULATIONS =====================================
     #========================================================================================================
-            
+
     #-------------------------------------------------------------------------------
     def calculate_coverage(self, pos_param=None, det_param=None):
         """Recalculate the full coverage map. Unless parameters are passed to the function,
@@ -1533,7 +1533,7 @@ class Experiment:
             pos_param: a ParamPositions object specifing which positions to use. None to use the global one.
             det_param: a ParamDetectors object specifing which detectors to use. None to use the global one.
         """
-        if self.inst is None:   
+        if self.inst is None:
             warnings.warn("experiment.calculate_coverage(): called with experiment.inst == None.")
             return
 
@@ -1603,7 +1603,7 @@ class Experiment:
 
         #Limit +- in q space
         qlim = inst.qlim
-        
+
         if config.cfg.force_pure_python:
             #----------- Pure Python Version --------------
 
@@ -1679,7 +1679,7 @@ class Experiment:
                             eqz = eh * B2(2,0) + ek * B2(2,1) + el * B2(2,2);
 
                             //Ok, now you have to find the index into QSPACE
-                            eix = round( (eqx+qlim)/qres ); if ((eix >= n) || (eix < 0)) eix = -1; 
+                            eix = round( (eqx+qlim)/qres ); if ((eix >= n) || (eix < 0)) eix = -1;
                             eiy = round( (eqy+qlim)/qres ); if ((eiy >= n) || (eiy < 0)) eiy = -1;
                             eiz = round( (eqz+qlim)/qres ); if ((eiz >= n) || (eiz < 0)) eiz = -1;
 
@@ -1698,7 +1698,7 @@ class Experiment:
                             }
 
                         }
-                        
+
                     }
                 }
             }
@@ -1715,7 +1715,7 @@ class Experiment:
         if self.verbose: print "Volume symmetry map done in %.3f sec." % (time.time()-t1)
 
 
-        
+
     #-------------------------------------------------------------------------------
     def use_symmetry(self):
         """Utility functions returns True if the parameters say to use crystal symmetry"""
@@ -1732,7 +1732,7 @@ class Experiment:
         if self.inst is None:
             warnings.warn("experiment.symmetry_coverage(): called with experiment.inst == None.")
             return
-        
+
         if self.use_symmetry():
             #We do the symmetry application here
             self.apply_volume_symmetry()
@@ -1806,23 +1806,23 @@ class Experiment:
 
 
 
-    
+
     #-------------------------------------------------------------------------------
     def invert_coverage(self):
-        """Invert the coverage map, showing the gaps in coverage, if requested 
+        """Invert the coverage map, showing the gaps in coverage, if requested
         by the parameters.
         Called after calculate_coverage()."""
-        if self.inst is None: 
+        if self.inst is None:
             warnings.warn("experiment.invert_coverage(): called with experiment.inst == None.")
             return
-        
+
         invert = self.params[PARAM_INVERT]
         if invert is None:
             #Don't invert if no setting is saved.
             do_invert = False
         else:
             do_invert = invert.invert
-            
+
         self._lock_qspace_displayed.acquire()
         if do_invert:
             #Ok, we invert, and account for the sphere that fits in the box
@@ -1831,27 +1831,27 @@ class Experiment:
             #Or we don't
             self.qspace_displayed = self.qspace.copy()
         self._lock_qspace_displayed.release()
-        
+
         #Continue processing
         self.slice_coverage()
-                    
-                    
+
+
     #-------------------------------------------------------------------------------
     def slice_coverage(self):
         """Do a slice of the q-space coverage from qmin to qmax.
         Called after invert_coverage().
         """
-        if self.inst is None: 
+        if self.inst is None:
             warnings.warn("experiment.slice_coverage(): called with experiment.inst == None.")
             return
 
         t1 = time.time()
- 
+
         #Find the slice amounts saved
         slice = self.params[PARAM_SLICE]
         if slice is None:
             slice = ParamSlice(False) #Create a "no-slice" slice
-            
+
         #Get the limits to slice to
         qmin = slice.slice_min
         qmax = slice.slice_max
@@ -1869,13 +1869,13 @@ class Experiment:
 
         #Finish processing
         self.finalize_displayed()
-        
+
     #-------------------------------------------------------------------------------
     def finalize_displayed(self):
         """Function to ensure that the displayed q-space shows up properly in mayavi."""
 
         self._lock_qspace_displayed.acquire()
-        # We null all the 6 faces of the cube. This makes it possible 
+        # We null all the 6 faces of the cube. This makes it possible
         # for the contour3d function to plot domains adjacent to the edge.
         self.qspace_displayed[0,:,:]=0
         self.qspace_displayed[:,0,:]=0
@@ -1895,14 +1895,14 @@ class Experiment:
         self.qspace_displayed[-1,-1,-1] = 1
 
         self._lock_qspace_displayed.release()
-        
+
     #-------------------------------------------------------------------------------
     def get_qspace_displayed(self):
         """Returns a reference to the qspace_displayed 3d matrix.
         Creates it if needed.
         Should be thread safe."""
         if self.qspace_displayed is None:
-            #Try to create an empty array for 
+            #Try to create an empty array for
             if self.qspace is None:
                 if self.inst is None:
                     raise StandardError("Experiment.get_qspace_displayed() called before experiment.inst was initialised.")
@@ -1915,7 +1915,7 @@ class Experiment:
             self._lock_qspace_displayed.acquire()
             self.qspace_displayed = self.qspace.copy()
             self._lock_qspace_displayed.release()
-                
+
         #At this point we should have a valid qspace_displayed
         return self.qspace_displayed
 
@@ -1925,7 +1925,7 @@ class Experiment:
     #======================================= COVERAGE STATS =====================================
     #========================================================================================================
 
-        
+
     #-------------------------------------------------------------------------------
     def calculate_coverage_stats(self):
         """Calculate coverage statistics for the current qspace data."""
@@ -1933,11 +1933,11 @@ class Experiment:
 
         t1 = time.time()
         qlim = self.inst.qlim
-        
+
         #Number of slices to make
         num = 30
         q_step = qlim/num
-        
+
         #Initialize the list
         self.coverage_stats = list()
 
@@ -1975,7 +1975,7 @@ class Experiment:
             qspace_radius = self.inst.qspace_radius.flatten()
             qspace = self.qspace.flatten()
             qspace_size = qspace.size
-            
+
             support = ""
             code = """
             int i, j;
@@ -1984,7 +1984,7 @@ class Experiment:
             int overall_points = 0;
             int overall_covered_points = 0;
             int overall_redundant_points = 0;
-            
+
             for (i=0; i<qspace_size; i++)
             {
                 //Coverage value at this points
@@ -2062,10 +2062,10 @@ class Experiment:
     #-------------------------------------------------------------------------------
     def overall_coverage_stats(self, qspace):
         """Given a 3D qspace coverage array, calculate the overall coverage % of a sphere.
-        
+
         Parameters:
             qspace: 3D array of coverage; points should be limited to a sphere of the same size.
-            
+
         Returns a tuple with the (coverage, redundancy) as percentage."""
         if self.inst is None: return
         t1 = time.time()
@@ -2132,7 +2132,7 @@ class Experiment:
                     mav.append( detectors[detector_num].edge_avoidance(horizontal, vertical, edge_x, edge_y) )
                 #Sum it
                 mysum = np.sum(np.array(mav) > 0.99)
-                
+
             refl.measurement_adjusted_sum = mysum
             rsa += (mysum > 0)
             refl.measurement_adjusted_value = mav
@@ -2157,7 +2157,7 @@ class Experiment:
 
         return None
 
-            
+
     #-------------------------------------------------------------------------------
     def get_coverage_stats_data(self):
         """Return the coverage stats as numpy arrays.
@@ -2191,7 +2191,7 @@ class Experiment:
                 coverage_q[i] = (self.coverage_stats[i].qmin + self.coverage_stats[i].qmax) / 2
                 y[i] = self.coverage_stats[i].coverage[redundancy_num]
             coverage_data.append( y )
-            
+
         #Return as tuple
         return (coverage_q, coverage_data)
 
@@ -2208,7 +2208,7 @@ class Experiment:
         Parameters:
             filename: path to .peaks or .integrate
             append: add on to the measurements; otherwise, they get cleared
-            sequential_detector_numbers :: detector numbers are from 1 to X in order. 
+            sequential_detector_numbers :: detector numbers are from 1 to X in order.
                 This is the old format (before April 2011).
         """
         if not os.path.exists(filename):
@@ -2231,14 +2231,14 @@ class Experiment:
                 #Detector number marker
                 if line.startswith("1"):
                     arr = line.split()
-                    
+
                     #Find the detector number
                     detnum = int(arr[2])
                     if (sequential_detector_numbers):
                         # make it 0-based
                         detnum = detnum - 1
                         if detnum>=0 and detnum < len(self.inst.detectors):
-                            det = self.inst.detectors[detnum] 
+                            det = self.inst.detectors[detnum]
                         else:
                             print "Warning: Detector number", detnum, "was not found!"
                     else:
@@ -2254,7 +2254,7 @@ class Experiment:
                                 break
                         if det is None:
                             print "Warning: Detector number", detnum, "was not found!"
-                    
+
 
                     #Find the angles, convert to radians
                     (chi, phi, omega) =  [np.deg2rad(float(arr[i])) for i in xrange(3,6)]
@@ -2280,7 +2280,7 @@ class Experiment:
                             rm.detector_num = detnum
                             col = float(arr[5])
                             row = float(arr[6])
-                            #Convert to horizontal 
+                            #Convert to horizontal
                             if not det is None:
                                 #@type det FlatDetector
                                 rm.horizontal = det.width * (det.xpixels/2-col)/det.xpixels
@@ -2298,7 +2298,7 @@ class Experiment:
             except:
                 #Ignore errors and keep loading the file
                 pass
-                        
+
         return errors
 
 
@@ -2367,7 +2367,7 @@ class Experiment:
 
                         #Add it
                         ref.real_measurements.append(rm)
-                        
+
             except IOError:
                 raise
             except:
@@ -2586,7 +2586,7 @@ class TestExperiment(unittest.TestCase):
         """Setup some calculations for reflections"""
         # @type e Experiment
         e = self.exp
-        e.range_h = (-10,10) 
+        e.range_h = (-10,10)
         e.range_k = (-10,10)
         e.range_l = (-10,10)
         e.range_automatic = False
@@ -2770,7 +2770,7 @@ class TestExperiment(unittest.TestCase):
         assert len(found)==len(hkl_list)+1, "correct # of results for %s. We wanted %d results but got %d" % (message, len(hkl_list), len(found))
         for hkl_wanted in hkl_list:
             assert hkl_wanted in found, "hkl %s was found in the list of results for %s" % (hkl_wanted, message)
-        
+
     def test_get_equivalent_reflections(self):
         """Test each of the 11 Laue classes to make sure the reflections work."""
         self.setup_calculated_reflections()
@@ -2821,7 +2821,7 @@ class TestExperiment(unittest.TestCase):
         print "--- C-code "
         e.initialize_volume_symmetry_map()
         c_map = e.volume_symmetry
-        
+
         print "--- Python-code "
         config.cfg.force_pure_python = True
         e.initialize_volume_symmetry_map()
@@ -2829,7 +2829,7 @@ class TestExperiment(unittest.TestCase):
         config.cfg.force_pure_python = False
 
         assert np.allclose(c_map, python_map), "Volume symmetry map is identical when made with C and Python"
-        
+
         #Do use symmetry
         e.params[PARAM_SYMMETRY] = ParamSymmetry(True)
         print "--- C-code "
@@ -2952,9 +2952,9 @@ class TestExperimentFourCircle(unittest.TestCase):
 
 if __name__ == "__main__":
 #    unittest.main()
-    
+
     tst = TestExperimentFourCircle('test_get_angles_to_measure_hkl')
     tst.setUp()
     tst.test_ub_matrix()
 
-   
+
