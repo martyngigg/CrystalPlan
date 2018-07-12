@@ -30,20 +30,20 @@ except ImportError, e:
 
 
 
-[wxID_PANELADDPOSITIONS, wxID_PANELADDPOSITIONSBUTTONCALCULATE, 
- wxID_PANELADDPOSITIONSBUTTONCANCEL, 
- wxID_PANELADDPOSITIONSCHECKIGNOREGONIO, 
- wxID_PANELADDPOSITIONSCHECKMULTIPROCESSING, 
- wxID_PANELADDPOSITIONSGAUGEPROGRESS, wxID_PANELADDPOSITIONSSTATICTEXTHELP, 
- wxID_PANELADDPOSITIONSSTATICTEXTPROGRESS, 
- wxID_PANELADDPOSITIONSSTATICTEXTTITLE, 
- wxID_PANELADDPOSITIONSSTATICTEXTWARNINGS, wxID_PANELADDPOSITIONSTEXTWARNINGS, 
+[wxID_PANELADDPOSITIONS, wxID_PANELADDPOSITIONSBUTTONCALCULATE,
+ wxID_PANELADDPOSITIONSBUTTONCANCEL,
+ wxID_PANELADDPOSITIONSCHECKIGNOREGONIO,
+ wxID_PANELADDPOSITIONSCHECKMULTIPROCESSING,
+ wxID_PANELADDPOSITIONSGAUGEPROGRESS, wxID_PANELADDPOSITIONSSTATICTEXTHELP,
+ wxID_PANELADDPOSITIONSSTATICTEXTPROGRESS,
+ wxID_PANELADDPOSITIONSSTATICTEXTTITLE,
+ wxID_PANELADDPOSITIONSSTATICTEXTWARNINGS, wxID_PANELADDPOSITIONSTEXTWARNINGS,
 ] = [wx.NewId() for _init_ctrls in range(11)]
 
 
 
 #-------------------------------------------------------------------------------
-#MESSAGES 
+#MESSAGES
 MSG_POSITION_CALCULATION_PROGRESS = "MSG_POSITION_CALCULATION_PROGRESS"
 MSG_POSITION_CALCULATION_DONE = "MSG_POSITION_CALCULATION_DONE"
 MSG_POSITION_CALCULATION_ABORTING = "MSG_POSITION_CALCULATION_ABORTING"
@@ -54,10 +54,10 @@ class CalculationThread(Thread):
     """Thread to run calculations (for detector coverage) in the background."""
     #Do we want to abort?
     _want_abort = False
-    
+
     #Set to true to use multiple CPUs
     use_multiprocessing = False
-    
+
     #list of angles to calculate
     positions = list()
 
@@ -82,9 +82,9 @@ class CalculationThread(Thread):
 
                 #GUI update only if it has been long enough
                 if (time.time() - t_last) > 0.2:
-                    model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, i)
+                    model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, iteration=i)
                     t_last = time.time()
-                    
+
                 #Update position list in GUI, but less often
                 model.messages.send_message_optional(self, model.messages.MSG_POSITION_LIST_CHANGED, delay=1.5)
 
@@ -104,34 +104,34 @@ class CalculationThread(Thread):
             #Premature abortion?
             if self._want_abort:
                 break
-                
+
         #Ok, we either finished or aborted.
-        model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, len(self.positions) )
+        model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, iteration=len(self.positions))
         model.messages.send_message( model.messages.MSG_POSITION_LIST_CHANGED)
-        model.messages.send_message( MSG_POSITION_CALCULATION_DONE, self.poscov_list)
+        model.messages.send_message( MSG_POSITION_CALCULATION_DONE, poscov_list=self.poscov_list)
 
     def abort(self):
         """abort worker thread."""
         # Method for use by main thread to signal an abort
         self._want_abort = True
-        model.messages.send_message(MSG_POSITION_CALCULATION_ABORTING, None)
-                
-        
+        model.messages.send_message(MSG_POSITION_CALCULATION_ABORTING)
+
+
 
 #========================================================================================================
 #========================================================================================================
 class AddPositionsController():
     """Controller for adding positions"""
     panel = None
-    
+
     #These will be the lists of angles
     valid = None
     invalid = None
     redundant = None
-    
+
     #This will be the background calculation thread
     calculationThread = None
-    
+
     #-------------------------------------------------------------------------------
     def __init__(self, panel):
         """panel: PanelAddPositions we are updating."""
@@ -204,7 +204,7 @@ class AddPositionsController():
                 self.sizerAngles.append(sizer)
 
                 i += 1
-                
+
         self.panel.boxSizerAngles.Layout()
         self.panel.boxSizerAll.Layout()
 
@@ -217,7 +217,7 @@ class AddPositionsController():
 
         self.evaluate(angles_lists, self.panel.checkIgnoreGonio.GetValue() )
         if not event is None: event.Skip()
-        
+
     #-------------------------------------------------------------------------------
     def make_list(self, input, anginfo):
         """Evaluate a string to make a numpy array. Converts units.
@@ -238,8 +238,8 @@ class AddPositionsController():
         except Exception, e:
             return ("Error reading '" + input + "': " + str(e) + "\n", None)
         else:
-            return ("", array)      
-        
+            return ("", array)
+
     #-------------------------------------------------------------------------------
     def print_list(self, list, extra_strings=None):
         """Convert the array list back to degrees and display it"""
@@ -251,7 +251,7 @@ class AddPositionsController():
                  s += " (%s)" % extra_strings[i]
             s += "\n"
         return s
-    
+
     #-------------------------------------------------------------------------------
     def evaluate(self, angles_lists, ignore_gonio):
         """Evaluate the strings from the text boxes.
@@ -263,7 +263,7 @@ class AddPositionsController():
             (err, new_values) = self.make_list(list_str, anginfo)
             errors = errors + err
             angles_values.append(new_values)
-            
+
         if len(errors) > 0:
             #Error in the list textbox; don't evaluate.
             self.panel.textWarnings.SetValue(errors)
@@ -281,9 +281,9 @@ class AddPositionsController():
                 s = s + "-- NO VALID ANGLES FOUND! --\n"
             self.panel.textWarnings.SetValue(s)
             self.panel.buttonCalculate.Enable( len(self.valid) > 0 )
-            
+
     #-------------------------------------------------------------------------------
-    def calculation_done(self, message):
+    def calculation_done(self, poscov_list=None):
         """Message handler for the calculations of coverage. Runs when calculation is finished (or aborted)."""
         #Reset GUI elements.
         self.panel.buttonCalculate.SetLabel("Begin Calculation")
@@ -292,22 +292,20 @@ class AddPositionsController():
         self.panel.buttonCancel.Enable(False)
         self.panel.gaugeProgress.SetValue(0)
         self.calculationThread = None
-        #This is the list of what we did calculate.
-        poscov_list = message.data
         #Let's select all these new positions, and show them
         display_thread.select_position_coverage(poscov_list, update_gui=True)
 
-                
+
     #-------------------------------------------------------------------------------
-    def calculation_progress(self, message):
+    def calculation_progress(self, iteration=0):
         """Handles displaying progress bar during calculation..."""
-        self.panel.gaugeProgress.SetValue(message.data)
-        
+        self.panel.gaugeProgress.SetValue(iteration)
+
     #-------------------------------------------------------------------------------
-    def calculation_aborting(self, message):
+    def calculation_aborting(self):
         """GUI updates, saying that it is in the process of aborting."""
         self.panel.buttonCancel.SetLabel("... Aborting ...")
-            
+
     #-------------------------------------------------------------------------------
     def execute(self):
         """Send a command to begin the calculation."""
@@ -318,22 +316,22 @@ class AddPositionsController():
         self.panel.gaugeProgress.SetRange( len(self.valid) )
         #This will start it!
         self.calculationThread = CalculationThread(self.valid, self.panel.checkMultiprocessing.GetValue())
-        
+
     #-------------------------------------------------------------------------------
     def abort(self):
         """Abort the calculation thread, if any."""
         if not (self.calculationThread is None):
             self.calculationThread.abort()
-            
-            
-            
+
+
+
 
 
 
 #========================================================================================================
 class PanelAddPositions(wx.Panel):
-                
-    
+
+
     def _init_coll_boxSizerMiddle_Items(self, parent):
         # generated method, don't edit
 
@@ -467,10 +465,10 @@ class PanelAddPositions(wx.Panel):
 
         self._init_sizers()
 
-        
+
 
     def __init__(self, parent):
-        self._init_ctrls(parent)        
+        self._init_ctrls(parent)
         #Additional code
         self.controller = AddPositionsController(self)
         self.controller.make_angle_controls()

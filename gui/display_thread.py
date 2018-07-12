@@ -34,7 +34,7 @@ NextParams = ParamsDict()
 class DisplayThread(Thread):
     """Thread to keep updating the displayed q-space coverage as fast as possible
     while keeping the UI responsive."""
-    
+
     _want_abort = False
 
     def __init__(self):
@@ -44,9 +44,9 @@ class DisplayThread(Thread):
         self.start()
 
     def run(self):
-        """Continually runs and sees if there was a request to update part of 
+        """Continually runs and sees if there was a request to update part of
         the display"""
-        
+
         while not self._want_abort:
             #Loop until aborted
             there_were_changes = False
@@ -70,8 +70,8 @@ class DisplayThread(Thread):
                 #No change in the requested display.
                 #We just wait a bit
                 time.sleep(0.1)
-                
-                
+
+
     def abort(self):
         """Abort the thread. Should only be called upon program exit."""
         self._want_abort = True
@@ -80,7 +80,7 @@ class DisplayThread(Thread):
 #========================================================================================================
 #========================================================================================================
 
-            
+
 def check_for_changes():
     """Checks if any of the parameters have changed, requiring a graphical update.
     Performs the update if needed."""
@@ -96,7 +96,7 @@ def check_for_changes():
 #                if key == "PARAM_POSITIONS":
 #                    print "now is", value.positions
 #                    if not LatestParams[key] is None: print "was", LatestParams[key].positions
-                    
+
                 #Compare current and older value, and check if an update is needed
                 if not ( LatestParams[key] == value ):
                     #This part needs to update. Save it for later.
@@ -172,12 +172,12 @@ def check_for_changes():
                 model.experiment.exp.recalculate_reflections(pos)
                 reflections_changed = True
                 reflections_recalculated = True
-                
+
         elif not (symmetry is None):
             #Just the symmetry - no need to recalc reflections
             model.experiment.exp.calculate_coverage()
             qspace_changed = True
-            
+
         elif not (invert is None) or not (slice is None):
             #Invert gets redone (which then does the slice)
             model.experiment.exp.invert_coverage()
@@ -209,7 +209,7 @@ def check_for_changes():
 def handle_change_of_qspace(changed_sample_U_matrix=None):
     """Handle a change of q-space size or resolution. Clear out items that need clearing.
     Force a redraw.
-    
+
     Parameters:
         changed_sample_U_matrix: set to a 3x3 matrix if the sample orientation has changed too.
     """
@@ -221,14 +221,14 @@ def handle_change_of_qspace(changed_sample_U_matrix=None):
             get_try_position().try_position.coverage = None
             if not changed_sample_U_matrix is None:
                 get_try_position().try_position.sample_U_matrix = changed_sample_U_matrix
-            
+
     #TODO: Add a lock?
     #Copy the parameters over
     NextParams.update(LatestParams)
     #Clear the latest to force the thread to re-do everything.
     LatestParams.clear()
     #TODO: Fix the slice display parameter - it can be moved off-scale.
-    
+
     #Re-init the qspace frame last?
     model.messages.send_message(model.messages.MSG_EXPERIMENT_QSPACE_SETTINGS_CHANGED)
 
@@ -270,7 +270,7 @@ def is_position_selected(poscov):
     else:
         #Get the value, return False if not in dictionary
         return param.positions.get( id(poscov), False)
-    
+
 #-----------------------------------------------------------------------------------------------
 def show_redundancy(value):
     """Sets whether the redundancy is displayed graphically (using transparent isosurfaces)."""
@@ -334,7 +334,7 @@ def select_additional_position_coverage(poscov_list, update_gui=False, select_it
 
     #Do we update the gui?
     if update_gui:
-        model.messages.send_message(model.messages.MSG_POSITION_SELECTION_CHANGED, posdict)
+        model.messages.send_message(model.messages.MSG_POSITION_SELECTION_CHANGED, pos_dict=posdict)
 
 #-----------------------------------------------------------------------------------------------
 def select_position_coverage(poscov_list, update_gui=False):
@@ -362,7 +362,7 @@ def select_position_coverage(poscov_list, update_gui=False):
     NextParams[model.experiment.PARAM_POSITIONS] = model.experiment.ParamPositions(posdict)
     #Do we update the gui?
     if update_gui:
-        model.messages.send_message(model.messages.MSG_POSITION_SELECTION_CHANGED, posdict)
+        model.messages.send_message(model.messages.MSG_POSITION_SELECTION_CHANGED, pos_dict=posdict)
 
 #-----------------------------------------------------------------------------------------------
 def clear_positions_selected():

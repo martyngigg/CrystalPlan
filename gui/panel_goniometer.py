@@ -25,17 +25,17 @@ from traitsui.menu import OKButton, CancelButton,RevertButton
 from traitsui.menu import Menu, Action, Separator
 
 
-[wxID_PANELGONIOMETER, wxID_PANELGONIOMETERCHOICEGONIO, 
- wxID_PANELGONIOMETERSTATICTEXT1, wxID_PANELGONIOMETERSTATICTEXTDESC, 
- wxID_PANELGONIOMETERSTATICTEXTDESCLABEL, 
+[wxID_PANELGONIOMETER, wxID_PANELGONIOMETERCHOICEGONIO,
+ wxID_PANELGONIOMETERSTATICTEXT1, wxID_PANELGONIOMETERSTATICTEXTDESC,
+ wxID_PANELGONIOMETERSTATICTEXTDESCLABEL,
  wxID_PANELGONIOMETERstaticTextCurrentGonio,
- wxID_PANELGONIOMETERSTATICTEXTTITLE, 
+ wxID_PANELGONIOMETERSTATICTEXTTITLE,
 ] = [wx.NewId() for _init_ctrls in range(7)]
 
 class PanelGoniometerController():
     """Controller and view for the PanelGoniometer."""
     selected = None
-    
+
     #------------------------------------------------------------------
     def __init__(self, panel):
         self.panel = panel
@@ -94,7 +94,7 @@ class PanelGoniometerController():
         else:
             #Select this one
             self.selected = model.goniometer.goniometers[index]
-            
+
         #Update the view
         self.update_selection()
 
@@ -135,7 +135,7 @@ class PanelGoniometerController():
                 #Apply the change
                 model.instrument.inst.set_goniometer(new_gonio, different_angles)
                 #Send a message to do other updates
-                model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED, "")
+                model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED)
                 #Show the current gonio
                 self.update_current()
 
@@ -228,7 +228,7 @@ class PanelGoniometer(wx.Panel):
 
         self.staticTextDesc = wx.StaticText(id=wxID_PANELGONIOMETERSTATICTEXTDESC,
               label=u'... ... text ... ...', name=u'staticTextDesc',
-              parent=self, 
+              parent=self,
               style=0)
 
         self.buttonApplyChanges = wx.Button(label=u'  Apply Changes to Goniometer...  ', parent=self,
@@ -246,10 +246,10 @@ class PanelGoniometer(wx.Panel):
         self.buttonSwitchGoniometer.SetToolTipString(u'Select the goniometer shown for this experiment. ')
         self.buttonSwitchGoniometer.Bind(wx.EVT_BUTTON, self.controller.switch_goniometer)
 
-        
+
     def __init__(self, parent):
         self.controller = PanelGoniometerController(self)
-        
+
         self._init_ctrls(parent)
         self._init_sizers()
         self.currentControl = None

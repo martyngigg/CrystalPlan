@@ -52,12 +52,13 @@ class FunctionCall:
 
 
 #----------------------------------------------------------------------
-def send_message(message_id, data=None):
+def send_message(message_id, **kwargs):
     """Thread-safe replacement for pubsub sendMessage."""
-    wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
+    print message_id, kwargs
+    wx.CallAfter(pub.sendMessage, message_id, **kwargs)
 
 #----------------------------------------------------------------------
-def send_message_optional(object, message_id, data=None, delay=0.33):
+def send_message_optional(object, message_id, **kwargs):
     """Sends a message but only if a sufficient time has elapsed since the last
     time any message was sent from that object.
     Parameters:
@@ -66,8 +67,9 @@ def send_message_optional(object, message_id, data=None, delay=0.33):
         data: any data object.
         delay: in seconds, the closest in time two messages will be sent to the same object.
     """
+    delay = kwargs.pop('delay', 0.33)
     if not hasattr(object, '_last_message_send_time') or (time.time()-object._last_message_send_time > delay):
-        wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
+        wx.CallAfter(pub.sendMessage, message_id, **kwargs)
         object._last_message_send_time = time.time()
 
 
@@ -81,7 +83,6 @@ def subscribe(function, topic):
 def unsubscribe(function, *args, **kwargs):
     """Alias for wx.lib.pubsub.Publisher.unsubscribe()"""
     pub.unsubscribe(function, *args, **kwargs)
-
 
 
 #def subscribe(function, topic, must_indicate_done=False):

@@ -33,7 +33,7 @@ import model
 class QspaceOptionsController:
     """This class is the view/controller for the PanelQspaceOptions."""
     panel = None
-    
+
     def __init__(self, PanelQspaceOptions):
         """Constructor."""
         self.panel = PanelQspaceOptions
@@ -63,20 +63,18 @@ class QspaceOptionsController:
     def show_redundancy(self, value):
         """Sets whether the redundancy is displayed graphically (using transparent isosurfaces)."""
         display_thread.show_redundancy(value)
-    
+
     def __del__(self):
         self.cleanup()
-        
+
     def cleanup(self):
         """Clean-up routine for closing the view."""
-        model.messages.unsubscribe(self.update_data)
-        
-    def update_data(self, argument):
-        """Called when a message is received saying that the q-space calculation has changed. 
+        model.messages.unsubscribe(self.update_data, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
+
+    def update_data(self):
+        """Called when a message is received saying that the q-space calculation has changed.
         Will update the graphical display.
-            argument: ignored; was necessary for the pubsub message passing system."""
-        #print "SliceController.update_data"
-        
+        """
         #Also do the coverage plot
         (data_x, data_y) = model.experiment.exp.get_coverage_stats_data()
         self.panel.sliceControl.SetData(data_x, data_y)
@@ -103,8 +101,8 @@ class PanelQspaceOptions(wx.Panel):
     """The slice panel is a custom control that allows the user to pick
     a slice through q-space to display.
     It also shows the coverage % through q-radius."""
-    
-    
+
+
     def _init_coll_boxSizerSliceOptions_Items(self, parent):
         # generated method, don't edit
 
@@ -225,7 +223,7 @@ class PanelQspaceOptions(wx.Panel):
             self._init_inelastic()
 
         #Show the initial data
-        self.controller.update_data(None)
+        self.controller.update_data()
 
 
     #----------------------------------------------------------------------------

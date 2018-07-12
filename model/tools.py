@@ -7,7 +7,7 @@
 #--- General Imports ---
 import numpy as np
 from numpy import array, sin, cos, pi, sign
-from scipy import weave
+import weave
 import os
 
 #--- Model Imports ---
@@ -28,7 +28,7 @@ class PeakOffset:
         self.offset = self.measured-self.predicted
         self.wavelength_predicted = wavelength_predicted
         self.wavelength_measured = wavelength_measured
-        
+
     def __str__(self):
         return "Det %d offset of %.3f, %.3f; wl=%.3f." % (self.det_num, self.offset[0], self.offset[1], self.wavelength)
 
@@ -43,7 +43,7 @@ def calculate_peak_offsets():
     gon = inst.goniometer
 
     print len(inst.positions)
-    
+
     offsets = []
     count = 0
     #@type ref Reflection
@@ -138,7 +138,7 @@ def save_offsets_to_csv(offsets, filename):
     for po in offsets:
         w.writerow([po.det_num, po.measured[0], po.measured[1], po.predicted[0], po.predicted[1], po.offset[0], po.offset[1], po.wavelength_measured, po.wavelength_predicted])
     f.close()
-        
+
 
 
 #==================================================================

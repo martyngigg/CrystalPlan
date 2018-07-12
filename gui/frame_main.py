@@ -219,14 +219,14 @@ class FrameMain(wx.Frame):
     def OnMenuLoadHFIRUB(self, event):
         self.load_HFIR_ubmatrix_file_dialog(self)
         event.Skip()
-        
+
     def OnMenuLoadLDM(self,event):
         self.load_ldm_file_dialog(self)
         self.RefreshAll()
         #This message will make the experiment lists update, etc.
-        model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED, "")
+        model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED)
         event.Skip()
-        
+
 
 
     def load_HFIR_ubmatrix_file_dialog(self, parent):
@@ -270,7 +270,7 @@ class FrameMain(wx.Frame):
         #Now this handles updating all the gui etc.
         self.tab_sample.OnReturningFromEditCrystal(old_U)
 
-        
+
 
     def load_ubmatrix_file_dialog(self, parent):
         """Opens a dialog asking the user where to load the ubmatrix file."""
@@ -315,7 +315,7 @@ class FrameMain(wx.Frame):
         #The old U matrix, before messing with it.
         old_U = model.experiment.exp.crystal.get_u_matrix()
 
-        #Load the file 
+        #Load the file
         (d_min,wl_min,wl_max) = model.experiment.exp.crystal.read_LDM_file(filename)
         if d_min > 0:
             model.experiment.exp.inst.d_min = d_min
@@ -337,7 +337,7 @@ class FrameMain(wx.Frame):
         if not gui_utils.load_experiment_file_dialog(self) is None:
             self.RefreshAll()
             #This message will make the experiment lists update, etc.
-            model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED, "")
+            model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED)
         event.Skip()
 
     def OnMenuView3D(self, event):
@@ -366,7 +366,7 @@ class FrameMain(wx.Frame):
         info.AddDeveloper(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
         info.AddDocWriter(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
         info.AddArtist("Icons taken from the Crystal Project,\nat http://www.everaldo.com/crystal/, \ndistributed under the LGPL; \nmodified and assembled by Janik Zikovsky")
-        
+
         if not gui_utils.is_mac():
             #Some of these are not natively mac-supported, not including them makes it look better on mac
             icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file)
@@ -399,7 +399,7 @@ class FrameMain(wx.Frame):
         #    absolute_file = os.path.abspath( os.path.split(__file__)[0] + "/" + filename)
         #    wx.MessageDialog(self, 'Sorry! There was an error opening the user guide in the webbrowser. You can find it at:\n\n%s\n\n(You can copy/paste the file path above)' % absolute_file,
         #                    'Error Opening User Guide', wx.OK|wx.ICON_ERROR).ShowModal()
-            
+
         event.Skip()
 
     def OnMenuGenerateUserGuide(self, event):
@@ -458,7 +458,7 @@ class FrameMain(wx.Frame):
             #'Nothing was selected.
             dialog.Destroy()
             return
-        
+
     def make_Laue_plot(self, det, detnum, parent):
         """ Create a simple Laue plot.
         Parameters
@@ -469,12 +469,12 @@ class FrameMain(wx.Frame):
 #        frame = wx.Window(parent)
 #        boxSizer = wx.BoxSizer(orient=wx.VERTICAL)
 #        frame.SetSizer(boxSizer)
-#        
+#
         # Now show the detector
         plot = detector_plot.DetectorPlot(parent)
         plot.set_detector(det)
         plot.SetToolTip(wx.ToolTip("Detector %s" % det.name))
-        
+
         # Collect all the measurements
         measures = []
         for ref in model.experiment.exp.reflections:
@@ -485,13 +485,13 @@ class FrameMain(wx.Frame):
                     measures.append( model.reflections.ReflectionMeasurement(ref, n))
         # Set them all for this detector
         plot.set_measurements(measures, det)
-                
-#        # Do layout        
+
+#        # Do layout
 #        label = wx.StaticText(parent, -1, "Detector %s" % det.name)
 #        boxSizer.Add(label,1, flag=wx.EXPAND)
 #        boxSizer.Add(plot,1, flag=wx.EXPAND)
 #        return frame
-    
+
         return plot
 
     def OnMenuLauePlot(self, event):
@@ -500,7 +500,7 @@ class FrameMain(wx.Frame):
         frame = wx.Frame(None, title='Laue Plot')
         boxSizer = wx.BoxSizer(orient=wx.HORIZONTAL)
         frame.SetSizer(boxSizer)
-        
+
         # Make a plot for each detector
         detnum = 0
         for det in model.instrument.inst.detectors:
@@ -508,7 +508,7 @@ class FrameMain(wx.Frame):
             #Make it resize
             boxSizer.Add(plot, 1, flag=wx.EXPAND)
             detnum += 1
-            
+
         frame.Show()
         event.Skip()
 
@@ -534,7 +534,7 @@ class FrameMain(wx.Frame):
               style=wx.DEFAULT_FRAME_STYLE,
               title="%s %s - Main Window" % (CrystalPlan_version.package_name, CrystalPlan_version.version) )
         self._init_menus()
-        
+
         self.SetClientSize(wx.Size(850, 630))
         self.SetMenuBar(self.menuBar1)
         self.SetMinSize(wx.Size(100, 100))
@@ -565,22 +565,22 @@ class FrameMain(wx.Frame):
         self._init_ctrls(parent)
         #Make the tabs for the notebook
         self.LoadNotebook()
-        
+
         #Subscribe to messages
         model.messages.subscribe(self.OnStatusBarUpdate, model.messages.MSG_UPDATE_MAIN_STATUSBAR)
         model.messages.subscribe(self.OnScriptCommand, model.messages.MSG_SCRIPT_COMMAND)
-        
+
         self.count = 0
 
         #Set the icon
         icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file)
         self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
-        
+
     #--------------------------------------------------------------------
     def LoadNotebook(self):
         """Add the notebook tabs. """
         self.tabs = []
-        
+
         self.tab_startup = panel_startup.PanelStartup(parent=self.notebook)
         self.tab_sample = panel_sample.PanelSample(parent=self.notebook)
         self.tab_goniometer = panel_goniometer.PanelGoniometer(parent=self.notebook)
@@ -628,7 +628,7 @@ class FrameMain(wx.Frame):
                 if tab.needs_apply():
                     wx.MessageDialog(self, "You have changed some settings in this tab. \nYou need to click the 'Apply' button to apply them!", "Need To Apply Changes", wx.OK).ShowModal()
 
-    
+
     def OnClose(self, event):
         res = wx.MessageDialog(self, "Are you sure you want to quit %s?" % CrystalPlan_version.package_name, "Quit %s?" % CrystalPlan_version.package_name, wx.YES_NO | wx.YES_DEFAULT).ShowModal()
         if res == wx.ID_YES:
@@ -639,7 +639,7 @@ class FrameMain(wx.Frame):
     def OnStatusBarUpdate(self, message):
         """Called when we receive a message that the statusbar needs updating."""
         #print message
-        self.statusBar_main.SetStatusText(message.data)
+        self.statusBar_main.SetStatusText(message)
 
     def OnScriptCommand(self, message):
         """Called to execute a scripted GUI command."""
@@ -652,7 +652,7 @@ class FrameMain(wx.Frame):
         self.count += 1
         #print "Idle", self.count
         event.Skip()
-        
+
 
 
 

@@ -32,7 +32,7 @@ class StartupTraitsHandler(Handler):
     """Handler that reacts to changes in the StartupParameters object."""
     frame = wx.Frame
     clicked_start = Bool(False)
-    
+
     #----------------------------------------------------------------------
     def __init__(self, frame, *args, **kwargs):
         Handler.__init__(self, *args, **kwargs)
@@ -51,7 +51,7 @@ class StartupTraitsHandler(Handler):
     #----------------------------------------------------------------------
     def check_validity(self):
         par = self.frame.params #@type par StartupParameters
-        
+
         #Try to adjust the points?
         if par.keep_points_same:
             qr = (par.q_lim*2) /(par.points_goal**(1./3))
@@ -78,7 +78,7 @@ class StartupTraitsHandler(Handler):
 
         #Always re-initialize the reflections
         model.experiment.exp.initialize_reflections()
-        
+
         #This recalcs the volumes and reflections
         gui_utils.do_recalculation_with_progress_bar(new_sample_U_matrix=None)
 
@@ -115,6 +115,7 @@ class StartupTraitsHandler(Handler):
 class StartupParameters(HasTraits):
     """This traits object holds parameters to start-up the program,
     or when re-calculating the q-space."""
+    show_wavelength_options =True
     d_min = Float(1.0)
     q_resolution = Float(0.2)
     d_max = Str(" +infinity ")
@@ -163,10 +164,10 @@ class StartupParameters(HasTraits):
                  Item("wl_max", label="Max. wavelength (angstroms)", format_str="%.3f", visible_when='show_wavelength_options', tooltip="Maximum wavelength that the source can provide, or that the detectors can measure."),
                  kind='panel',
             )
-            
+
 
     useful_list = ['d_min', 'wl_min', 'wl_max', 'q_resolution']
-    
+
     def get_params(self):
         """Returns a dictionary of the useful parameters saved."""
         params = {}
@@ -181,7 +182,7 @@ class StartupParameters(HasTraits):
         for name in self.useful_list:
             if hasattr(other, name):
                 setattr(self, name,  getattr(other, name) )
-        
+
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return (self.d_min == other.d_min) and (self.q_resolution == other.q_resolution) \
@@ -190,23 +191,19 @@ class StartupParameters(HasTraits):
     def __ne__(self,other):
         return not self.__eq__(other)
 
-    def __init__(self):
-        #self.fourcircle_mode = gui_utils.fourcircle_mode()
-        self.show_wavelength_options = True
-        
 
 # ===========================================================================================
 # ===========================================================================================
 # ===========================================================================================
 
-[wxID_DIALOGSTARTUP, wxID_DIALOGSTARTUPBUTTONQUIT, 
+[wxID_DIALOGSTARTUP, wxID_DIALOGSTARTUPBUTTONQUIT,
  wxID_DIALOGSTARTUPbuttonApply, wxID_DIALOGSTARTUPGAUGERECALC,
- wxID_DIALOGSTARTUPLISTINSTRUMENTS, wxID_DIALOGSTARTUPSTATICLINE1, 
- wxID_DIALOGSTARTUPSTATICLINE2, wxID_DIALOGSTARTUPSTATICTEXTHELP, 
- wxID_DIALOGSTARTUPSTATICTEXTRECALCULATIONPROGRESS, 
- wxID_DIALOGSTARTUPSTATICTEXTRECALCULATIONSTATUS, 
- wxID_DIALOGSTARTUPSTATICTEXTSELECT, wxID_DIALOGSTARTUPSTATICTEXTSPACER1, 
- wxID_DIALOGSTARTUPSTATICTEXTSPACEWARNING, wxID_DIALOGSTARTUPSTATICTEXTTITLE, 
+ wxID_DIALOGSTARTUPLISTINSTRUMENTS, wxID_DIALOGSTARTUPSTATICLINE1,
+ wxID_DIALOGSTARTUPSTATICLINE2, wxID_DIALOGSTARTUPSTATICTEXTHELP,
+ wxID_DIALOGSTARTUPSTATICTEXTRECALCULATIONPROGRESS,
+ wxID_DIALOGSTARTUPSTATICTEXTRECALCULATIONSTATUS,
+ wxID_DIALOGSTARTUPSTATICTEXTSELECT, wxID_DIALOGSTARTUPSTATICTEXTSPACER1,
+ wxID_DIALOGSTARTUPSTATICTEXTSPACEWARNING, wxID_DIALOGSTARTUPSTATICTEXTTITLE,
 ] = [wx.NewId() for _init_ctrls in range(14)]
 
 class PanelStartup(wx.Panel):
@@ -336,11 +333,11 @@ class PanelStartup(wx.Panel):
         if not model.instrument.inst is None:
             if not model.instrument.inst.qspace_radius is None:
                 self.params.points_goal = model.instrument.inst.qspace_radius.size
-                
+
         self.handler = StartupTraitsHandler(self)
-        self.control = self.params.edit_traits(parent=self, kind='subpanel', handler=self.handler).control
-        self.boxSizerParams.AddWindow(self.control, 3, border=1, flag=wx.EXPAND)
-        self.GetSizer().Layout()
+        panel = wx.Window(self)
+        self.boxSizerParams.AddWindow(panel, 3, border=1, flag=wx.EXPAND)
+        self.control = self.params.edit_traits(parent=panel, kind='subpanel', handler=self.handler).control
         #Make a copy for comparison
         self.original_params = copy.copy(self.params)
 
@@ -360,7 +357,7 @@ class PanelStartup(wx.Panel):
     def needs_apply(self):
         """Return True if the panel needs to be applied, because a setting changed."""
         return (self.original_params != self.params)
-        
+
 
 
 # ===========================================================================================
@@ -373,4 +370,4 @@ if __name__ == '__main__':
     app.frame.SetClientSize(wx.Size(700,500))
     app.MainLoop()
 
-    
+

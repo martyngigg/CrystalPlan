@@ -21,19 +21,19 @@ import model
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-[wxID_PANELREFLECTIONSVIEWOPTIONS, 
- wxID_PANELREFLECTIONSVIEWOPTIONSCHECKAUTOSIZE, 
- wxID_PANELREFLECTIONSVIEWOPTIONSCHECKHIGHLIGHTIMPORTANT, 
- wxID_PANELREFLECTIONSVIEWOPTIONSCHECKREALTIMESLICE, 
- wxID_PANELREFLECTIONSVIEWOPTIONSCHECKSHOWSLICE, 
- wxID_PANELREFLECTIONSVIEWOPTIONSCHOICEVIEW, 
- wxID_PANELREFLECTIONSVIEWOPTIONSPANEL_TO_HOLD_SLICE_CONTROL, 
- wxID_PANELREFLECTIONSVIEWOPTIONSRADIOPIXELS, 
- wxID_PANELREFLECTIONSVIEWOPTIONSRADIOSPHERES, 
- wxID_PANELREFLECTIONSVIEWOPTIONSSLIDERSIZE, 
- wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTDISPLAYAS, 
- wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTSIZE, 
- wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTVIEWOPTION, 
+[wxID_PANELREFLECTIONSVIEWOPTIONS,
+ wxID_PANELREFLECTIONSVIEWOPTIONSCHECKAUTOSIZE,
+ wxID_PANELREFLECTIONSVIEWOPTIONSCHECKHIGHLIGHTIMPORTANT,
+ wxID_PANELREFLECTIONSVIEWOPTIONSCHECKREALTIMESLICE,
+ wxID_PANELREFLECTIONSVIEWOPTIONSCHECKSHOWSLICE,
+ wxID_PANELREFLECTIONSVIEWOPTIONSCHOICEVIEW,
+ wxID_PANELREFLECTIONSVIEWOPTIONSPANEL_TO_HOLD_SLICE_CONTROL,
+ wxID_PANELREFLECTIONSVIEWOPTIONSRADIOPIXELS,
+ wxID_PANELREFLECTIONSVIEWOPTIONSRADIOSPHERES,
+ wxID_PANELREFLECTIONSVIEWOPTIONSSLIDERSIZE,
+ wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTDISPLAYAS,
+ wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTSIZE,
+ wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTVIEWOPTION,
 ] = [wx.NewId() for _init_ctrls in range(13)]
 
 
@@ -66,7 +66,7 @@ class ReflectionsViewOptionsController:
 
     def cleanup(self):
         """Clean-up routine for closing the view."""
-        model.messages.unsubscribe(self.update_data)
+        model.messages.unsubscribe(self.update_data, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
 
 
     #-------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ class ReflectionsViewOptionsController:
         self.panel.sliderSize.SetValue(10. * param.size)
         self.panel.sliderSize.Enable(not param.automatic_size)
         self.panel.checkAutoSize.SetValue(param.automatic_size)
-        
+
         #- Masking settings
         # @type param ParamReflectionMasking
         param = display_thread.get_reflection_masking_params()
@@ -104,7 +104,7 @@ class ReflectionsViewOptionsController:
         self._inside_show_settings = True
         self.panel.sliderSize.SetValue(newsize * 10.)
         self._inside_show_settings = False
-        
+
     #-------------------------------------------------------------------------------
     def change_masking_settings(self):
         """Call whenever a checbkox changes the masking settings."""
@@ -126,12 +126,12 @@ class ReflectionsViewOptionsController:
             param.display_as = param.DISPLAY_AS_PIXELS
         else:
             param.display_as = param.DISPLAY_AS_SPHERES
-            
+
         if self.panel.radioMeasured.GetValue() > 0:
             param.color_map = param.COLOR_BY_MEASURED
         else:
             param.color_map = param.COLOR_BY_PREDICTED
-            
+
         param.size = self.panel.sliderSize.GetValue() / 10.
         param.automatic_size = self.panel.checkAutoSize.GetValue()
         #Make sure the slider is enabled/disabled as needed
@@ -166,7 +166,7 @@ class ReflectionsViewOptionsController:
         self._set_masking_settings(mask)
 
     #-------------------------------------------------------------------------------
-    def update_data(self, argument):
+    def update_data(self):
         """Called when a message is received saying that the q-space calculation has changed.
         Will update the graphical display.
             argument: ignored; was necessary for the pubsub message passing system."""
@@ -299,7 +299,7 @@ class PanelReflectionsViewOptions(wx.Panel):
         self.checkHighlightImportant.SetValue(True)
         self.checkHighlightImportant.Hide()
 
-        
+
         self.checkUseSymmetry = wx.CheckBox(label=u'Use Symmetry?',
               name=u'checkUseSymmetry', parent=self, style=0)
         self.checkUseSymmetry.SetValue(False)
@@ -370,7 +370,7 @@ class PanelReflectionsViewOptions(wx.Panel):
     #-------------------------------------------------------------------------------
     def __init__(self, parent):
         self._init_ctrls(parent)
-        
+
         #Create the view/controller
         self.controller = ReflectionsViewOptionsController(self)
 
@@ -389,7 +389,7 @@ class PanelReflectionsViewOptions(wx.Panel):
         self.controller.change_masking_settings()
 
         #Show the initial data
-        self.controller.update_data(None)
+        self.controller.update_data()
 
 
     #-------------------------------------------------------------------------------
@@ -419,7 +419,7 @@ class PanelReflectionsViewOptions(wx.Panel):
 
 
 
-        
+
 # ===========================================================================================
 # ===========================================================================================
 # ===========================================================================================
