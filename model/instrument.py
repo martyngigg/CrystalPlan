@@ -837,7 +837,7 @@ class Instrument:
                 continue
 
             #Output and statusbar messages, if it's been long enough
-            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
+            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
                 if self.verbose: sys.stdout.write(det.name + ", ")
@@ -1019,7 +1019,7 @@ class Instrument:
         if use_multiprocessing: ump = " using multiprocessing"
 
         #Send messages, but not too frequently.
-        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating %s%s..." % (angles_string,ump))
+        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating %s%s..." % (angles_string,ump))
 
         t1 = time.time()
         coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix)
@@ -1032,7 +1032,7 @@ class Instrument:
         #Add it to the list.
         self.positions.append(pos)
         #Statusbar update
-        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculation of %s complete." % angles_string)
+        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculation of %s complete." % angles_string)
 
         return pos
 
@@ -1431,7 +1431,7 @@ class InstrumentInelastic(Instrument):
                 continue
 
             #Output and statusbar messages, if it's been long enough
-            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
+            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
                 if self.verbose: sys.stdout.write(det.name + ", ")

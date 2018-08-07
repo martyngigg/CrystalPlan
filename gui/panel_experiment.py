@@ -24,14 +24,14 @@ from traitsui.menu import OKButton, CancelButton
 from traitsui.editors import EnumEditor
 
 
-[wxID_PANELEXPERIMENT, wxID_PANELEXPERIMENTBUTTONDELETEALL, 
- wxID_PANELEXPERIMENTBUTTONDELETEHIGHLIGHTED, 
- wxID_PANELEXPERIMENTBUTTONDELETEUNUSED, 
- wxID_PANELEXPERIMENTBUTTONREFRESHLIST, wxID_PANELEXPERIMENTBUTTONSAVETOCSV, 
+[wxID_PANELEXPERIMENT, wxID_PANELEXPERIMENTBUTTONDELETEALL,
+ wxID_PANELEXPERIMENTBUTTONDELETEHIGHLIGHTED,
+ wxID_PANELEXPERIMENTBUTTONDELETEUNUSED,
+ wxID_PANELEXPERIMENTBUTTONREFRESHLIST, wxID_PANELEXPERIMENTBUTTONSAVETOCSV,
  wxID_PANELEXPERIMENTcheckUseAll,
- wxID_PANELEXPERIMENTCHECKSELECTHIGHLIGHTED, wxID_PANELEXPERIMENTGRIDEXP, 
- wxID_PANELEXPERIMENTSTATICTEXTESTIMATEDTIME, 
- wxID_PANELEXPERIMENTSTATICTEXTHELP, 
+ wxID_PANELEXPERIMENTCHECKSELECTHIGHLIGHTED, wxID_PANELEXPERIMENTGRIDEXP,
+ wxID_PANELEXPERIMENTSTATICTEXTESTIMATEDTIME,
+ wxID_PANELEXPERIMENTSTATICTEXTHELP,
 ] = [wx.NewId() for _init_ctrls in range(11)]
 
 
@@ -40,7 +40,7 @@ from traitsui.editors import EnumEditor
 #-------------------------------------------------------------------------------
 class ExperimentGridController():
     """View/Controller for the sample orientation grid."""
-    panel = None 
+    panel = None
 
     #----------------------------------------------------------------------------------------
     def __init__(self, panel):
@@ -81,7 +81,7 @@ class ExperimentGridController():
         #Label width/height
         grid.SetColLabelSize(40)
         grid.SetRowLabelSize(40)
-        
+
         #Find that the grid should be
         num_angles = len(model.instrument.inst.angles)
         num_cols = 4 + num_angles
@@ -159,16 +159,14 @@ class ExperimentGridController():
 
 
     #----------------------------------------------------------------------------------------
-    def update_selection(self, message=None):
+    def update_selection(self, pos_dict=None):
         """Updates the GUI to reflect all the selected positions in the latest parameters.
         If message is set, this is the handler for an external change in selection.
         The message.data dictionary is used instead of latestparams.
         """
         #Re-check the previously checked items.
-        if message is None:
+        if pos_dict is None:
             pos_dict = display_thread.get_positions_dict()
-        else:
-            pos_dict = message.data
 
         grid = self.panel.gridExp
 
@@ -190,7 +188,7 @@ class ExperimentGridController():
             #Check it if you find it, and it's true.
             grid.SetCellValue(i, 0, val )
             grid.SetCellAlignment(i, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE )
-            
+
         #If the selection changes, the estimated time will change too
         self.update_estimated_time()
 
@@ -246,7 +244,7 @@ class ExperimentGridController():
             poscov.comment = cell_str
         else:
             raise NotImplementedError("You should not be able to edit this cell, as it is read-only!")
-                
+
 
 
     #----------------------------------------------------------------------------------------
@@ -282,7 +280,7 @@ class ExperimentGridController():
             self.update_grid()
 
 
-            
+
 
 
     #----------------------------------------------------------------------------------------
@@ -362,7 +360,7 @@ class StoppingCriterionParams(HasTraits):
     criterion_value = Float(60.0, desc="the value corresponding to the specified criterion.")
     criterion_list = ["1"]
     stopping_criterion = "1"
-    
+
     def get_view(self):
         return View(
             Item('stopping_criterion', editor=EnumEditor(name="criterion_list")),
@@ -564,7 +562,7 @@ class PanelExperiment(wx.Panel):
               pos=wx.Point(240, 33), style=0)
         self.buttonChangeStopping.Bind(wx.EVT_BUTTON, self.OnButtonChangeStopping)
         self.buttonChangeStopping.SetToolTipString("Change the stopping criteria and value for all selected rows.")
-              
+
         self._init_sizers()
 
     def __init__(self, parent):
@@ -576,7 +574,7 @@ class PanelExperiment(wx.Panel):
 
         #Set the controller
         self.controller = ExperimentGridController(self)
-        
+
     def Refresh(self):
         #Delete all rows and refresh
         self.gridExp.DeleteRows(0, self.gridExp.GetNumberRows())
@@ -664,7 +662,7 @@ class PanelExperiment(wx.Panel):
             if not poscov is None:
                 crit.stopping_criterion = model.experiment.get_stopping_criterion_friendly_name(poscov.criterion)
                 crit.criterion_value = poscov.criterion_value
-                
+
             res = crit.configure_traits(kind="modal", view=crit.get_view())
             if res:
                 #Clicked ok.
