@@ -326,18 +326,10 @@ class Instrument:
                 cylindrical = True
 
             # Skip other comment rows
-            while True:
-                row = reader.next()
-                if len(row) > 0:
-                    if len(row[0]) > 0:
-                        if row[0][0] != '#': break
-                    else:
-                        break
-                else:
-                    break
+            lines = filter(lambda line: len(line) > 0 and line[0][0] != '#', list(reader))
 
             count = 1
-            for row in reader:
+            for row in lines:
                 if cylindrical:
                     # -------- Cylindrical Detector ---------
                     name = row[0].strip()
