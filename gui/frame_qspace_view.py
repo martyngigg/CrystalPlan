@@ -49,7 +49,7 @@ try:
 
 except ImportError, e:
     print "FrameQspaceView: ERROR IMPORTING MAYAVI MODULES - 3D WILL NOT WORK!"
-    
+
 
 
 
@@ -73,7 +73,7 @@ def get_instance(parent):
     else:
         return _instance
 
-    
+
 
 #-------------------------------------------------------------------------------
 #-------- VIEW/CONTROLLER ------------------------------------------------------
@@ -91,11 +91,11 @@ class QspaceViewController(HasTraits):
         """Default initializer for scene"""
         self.engine.start()
         return MlabSceneModel(engine=self.engine)
-    
+
     #3D view of the scene.
     view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), resizable=True,
                     show_label=False), resizable=True)
-    
+
     #The FrameQspaceView that is calling this.
     parent_frame = None
 
@@ -133,7 +133,7 @@ class QspaceViewController(HasTraits):
         self.update_data_volume()
         self.update_data_points()
         self.view_mode_changed()
-        
+
         #Don't open a child frame at first
         self.reflection_info_child_frame = None
 
@@ -150,10 +150,13 @@ class QspaceViewController(HasTraits):
         #Remove the scene from engine
         self.engine.remove_scene(self.scene)
         self.engine.stop()
-        model.messages.unsubscribe(self.update_stats_panel)
-        model.messages.unsubscribe(self.update_data_volume)
-        model.messages.unsubscribe(self.update_data_points)
-        model.messages.unsubscribe(self.init_view_objects)
+
+        model.messages.unsubscribe(self.update_stats_panel, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
+        model.messages.unsubscribe(self.update_data_volume, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
+        model.messages.unsubscribe(self.update_data_points, model.messages.MSG_EXPERIMENT_REFLECTIONS_CHANGED)
+        model.messages.unsubscribe(self.update_stats_panel, model.messages.MSG_EXPERIMENT_REFLECTIONS_CHANGED)
+        model.messages.unsubscribe(self.init_view_objects, model.messages.MSG_EXPERIMENT_QSPACE_SETTINGS_CHANGED)
+
         #Also close child windows
         if not self.reflection_info_child_frame is None:
             self.reflection_info_child_frame.Destroy()
@@ -184,7 +187,7 @@ class QspaceViewController(HasTraits):
         pp = self.pointpicker
         x, y = obj.GetEventPosition()
         pp.pick((float(x), float(y), 0.0), self.scene.renderer)
-        
+
         #These are the closest coordinates found
         coordinates = pp.pick_position
 
@@ -199,7 +202,7 @@ class QspaceViewController(HasTraits):
                 #If in glyph mode, we can use that one instead.
                 # But the points surface is better.
                 coordinates = pp.picked_positions[i]
-                
+
         #Look for the closest reflection to those coordinates
         return model.experiment.exp.get_reflection_closest_to_q( column(coordinates) )
 
@@ -286,14 +289,14 @@ class QspaceViewController(HasTraits):
     def on_button_release(self, obj, evt):
         """Event handler for the 3d Scene."""
         pass
-    
-        
+
+
     #-----------------------------------------------------------------------------------------------
     def init_view_objects(self, *args):
         """Initialize (or re-initialize) all the view elements in the scene.
         This needs to be called when q-space modeled area changes (changing the outline) or
             q-resolution, etc.
-        """ 
+        """
         #Prevent drawing all the intermediate steps
         self.scene.disable_render = True
 
@@ -328,7 +331,7 @@ class QspaceViewController(HasTraits):
         self.warning_text = txt
         engine.add_module(self.warning_text)
         self.warning_text.visible = self.warning_text_visible
-        
+
         #---- Make the isosurface object that goes with the volume coverage data -----
         iso = IsoSurface()
         self.iso = iso
@@ -470,13 +473,13 @@ class QspaceViewController(HasTraits):
 #            self.points_lut[:,1] = 0  #G
 #            self.points_lut[:,2] = 255  #B
             self.points_lut[:,3] = 255  #alpha
-        
+
 
     #-----------------------------------------------------------------------------------------------
     def show_pipeline(self):
         """Show the Mayavi pipeline editor window."""
         mlab.show_pipeline()
-        
+
 
     #-----------------------------------------------------------------------------------------------
     def make_point_data(self):
@@ -521,7 +524,7 @@ class QspaceViewController(HasTraits):
         if num <= 0:
             #Nothing to show!
             return pd
-        
+
         else:
 
             #Positions = our array of q-vectors.
@@ -641,7 +644,7 @@ class QspaceViewController(HasTraits):
         """
         #Do we need to adjust which elements are visible?
         change_visibility = not self.in_volume_mode()
-            
+
         #No GUI updates while we work
         self.scene.disable_render = True
 
@@ -664,7 +667,7 @@ class QspaceViewController(HasTraits):
         if self.in_pixel_mode():
             # ------------ Pixel View -----------------------
             self.pixel_view = True
-            
+
             if change_visibility:
                 #Hide the sphere view, show the points
                 self.points_module_glyph.visible = False
@@ -684,7 +687,7 @@ class QspaceViewController(HasTraits):
         else:
             # ------------ Sphere View -----------------------
             self.pixel_view = False
-            
+
             if change_visibility:
                 #Hide the points view, show the spheres
                 self.points_module_glyph.visible = True
@@ -709,7 +712,7 @@ class QspaceViewController(HasTraits):
 
         #This will redraw now.
         self.scene.disable_render = False
-        
+
         self.point_data_needs_updating = False
 
         #The slice panel updates separately since it is subscribed to the messages.
@@ -756,12 +759,12 @@ class QspaceViewController(HasTraits):
 
         #Make sure the color scale is good
         self.fix_colorscale(self.iso)
-        
+
         # Doc says: Call this function when you change the array data in-place.
         #   This call should update the MayaVi views.
         # NOTE! Calling this from a different thread seems to crash.
         self.data_src.update()
-        
+
         self.scene.disable_render = False
 
         self.volume_data_needs_updating = False
@@ -825,17 +828,17 @@ class QspaceViewController(HasTraits):
                 self.parent_frame.stats_panel.show_reflection_stats(use_symmetry, exp.reflection_stats_with_symmetry)
             else:
                 self.parent_frame.stats_panel.show_reflection_stats(use_symmetry, exp.reflection_stats)
-        
-        
 
-[wxID_FRAMEQSPACEVIEW, wxID_FRAMEQSPACEVIEWBUTTONADVANCEDVIEW, 
- wxID_FRAMEQSPACEVIEWGAUGECOVERAGE, wxID_FRAMEQSPACEVIEWGAUGEREDUNDANCY, 
- wxID_FRAMEQSPACEVIEWPANEL3D, wxID_FRAMEQSPACEVIEWPANELBOTTOM, 
- wxID_FRAMEQSPACEVIEWPANELSTATS, wxID_FRAMEQSPACEVIEWPANEL_TO_HOLD_SLICE, 
- wxID_FRAMEQSPACEVIEWSPLITTERALL, wxID_FRAMEQSPACEVIEWSTATICLINESPACER, 
- wxID_FRAMEQSPACEVIEWSTATICTEXTSTATS1, 
- wxID_FRAMEQSPACEVIEWSTATICTEXTSTATSCOVERED, 
- wxID_FRAMEQSPACEVIEWSTATICTEXTSTATSREDUNDANT, 
+
+
+[wxID_FRAMEQSPACEVIEW, wxID_FRAMEQSPACEVIEWBUTTONADVANCEDVIEW,
+ wxID_FRAMEQSPACEVIEWGAUGECOVERAGE, wxID_FRAMEQSPACEVIEWGAUGEREDUNDANCY,
+ wxID_FRAMEQSPACEVIEWPANEL3D, wxID_FRAMEQSPACEVIEWPANELBOTTOM,
+ wxID_FRAMEQSPACEVIEWPANELSTATS, wxID_FRAMEQSPACEVIEWPANEL_TO_HOLD_SLICE,
+ wxID_FRAMEQSPACEVIEWSPLITTERALL, wxID_FRAMEQSPACEVIEWSTATICLINESPACER,
+ wxID_FRAMEQSPACEVIEWSTATICTEXTSTATS1,
+ wxID_FRAMEQSPACEVIEWSTATICTEXTSTATSCOVERED,
+ wxID_FRAMEQSPACEVIEWSTATICTEXTSTATSREDUNDANT,
 ] = [wx.NewId() for _init_ctrls in range(13)]
 
 #-------------------------------------------------------------------------------
@@ -906,7 +909,7 @@ class FrameQspaceView(wx.Frame):
         self.panel3D.SetMinSize(wx.Size(-1, -1))
         self.splitterAll.SplitHorizontally(self.panel3D, self.panelBottom, 520)
         self.panel3D.Bind(wx.EVT_SIZE, self.onPanel3DSize)
-        
+
         self.buttonAdvancedView = wx.Button(id=wxID_FRAMEQSPACEVIEWBUTTONADVANCEDVIEW,
               label=u'3D Advanced Settings...', name=u'buttonAdvancedView',
               parent=self.panelStats, pos=wx.Point(0, 160), size=wx.Size(220,
@@ -953,22 +956,22 @@ class FrameQspaceView(wx.Frame):
             size=wx.Size(624, 120), style=wx.TAB_TRAVERSAL)
         #Put it in the sizer
         self.boxSizerStats.Insert(0, self.stats_panel, 1, border=0, flag=wx.EXPAND)
-        
+
         # Create the view controller
         self.controller = QspaceViewController(self)
-        
+
         #This sets the parent control
         self.control = self.controller.edit_traits(
                         parent=self.panel3D,
                         kind='panel').control
-                        
+
         #Add a sizer that holds the mayaview, and expand it
         sizer = wx.BoxSizer(orient=wx.VERTICAL)
         sizer.Add(self.control, 1, wx.EXPAND)
         #Also put the mouse info line after
         sizer.Add(self.staticTextMouseInfo, 0, border=8, flag=wx.EXPAND | wx.LEFT)
         self.panel3D.SetSizer(sizer)
-        
+
         self.init_plot()
 
         #Once the window is shown, we can initialize the pickers.

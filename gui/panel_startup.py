@@ -115,6 +115,7 @@ class StartupTraitsHandler(Handler):
 class StartupParameters(HasTraits):
     """This traits object holds parameters to start-up the program,
     or when re-calculating the q-space."""
+    show_wavelength_options =True
     d_min = Float(1.0)
     q_resolution = Float(0.2)
     d_max = Str(" +infinity ")
@@ -189,10 +190,6 @@ class StartupParameters(HasTraits):
 
     def __ne__(self,other):
         return not self.__eq__(other)
-
-    def __init__(self):
-        #self.fourcircle_mode = gui_utils.fourcircle_mode()
-        self.show_wavelength_options = True
 
 
 # ===========================================================================================
@@ -338,11 +335,9 @@ class PanelStartup(wx.Panel):
                 self.params.points_goal = model.instrument.inst.qspace_radius.size
 
         self.handler = StartupTraitsHandler(self)
-        self.control = self.params.edit_traits(parent=self, kind='subpanel', handler=self.handler).control
-        print type(self.control)
-        panel = wx.Window(self.control)
+        panel = wx.Window(self)
         self.boxSizerParams.AddWindow(panel, 3, border=1, flag=wx.EXPAND)
-        self.GetSizer().Layout()
+        self.control = self.params.edit_traits(parent=panel, kind='subpanel', handler=self.handler).control
         #Make a copy for comparison
         self.original_params = copy.copy(self.params)
 

@@ -85,7 +85,6 @@ def unsubscribe(function, *args, **kwargs):
     pub.unsubscribe(function, *args, **kwargs)
 
 
-
 #def subscribe(function, topic, must_indicate_done=False):
 #    """Subscribe a function to a message topic.
 #    Parameters:
