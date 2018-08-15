@@ -32,7 +32,7 @@ class SampleOrientationWhenUBMatrixWasSaved(HasTraits):
     phi_degrees = Float(0.)
     chi_degrees = Float(0.)
     omega_degrees = Float(0.)
-    
+
     view = View(
         Item('phi_degrees', label='Phi (degrees)'),
         Item('chi_degrees', label='Chi (degrees)'),
@@ -171,7 +171,7 @@ class DialogEditCrystal(wx.Dialog):
     #---------------------------------------------------------------------------
     def __init__(self, parent, my_crystal):
         self._init_ctrls(parent)
-        
+
         #Make all the sizers
         self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
         self.boxSizerIsaw = wx.BoxSizer(orient=wx.VERTICAL)
@@ -190,7 +190,7 @@ class DialogEditCrystal(wx.Dialog):
         self.view_top =  View( Group(
             Item("name", label="Crystal Name"),
             Item("description", label="Description:", editor=TextEditor(multi_line=True)),
-            Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", format_str="%.3f", style='readonly'),
+            Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", format_str="%.3f %.3f %.3f", style='readonly'),
             Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", format_str="%.3f", style='readonly'),
             Item("point_group_name", label="Point Group:", editor=EnumEditor(name="point_group_name_list")),
             Item("reflection_condition_name", label="Reflection Condition:", editor=EnumEditor(name="reflection_condition_name_list")),
@@ -204,7 +204,7 @@ class DialogEditCrystal(wx.Dialog):
 
         # Now add the notebook, make it expand
         self.boxSizerAll.AddWindow(self.notebook, 1, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
-            
+
         #Now a view to manually create the parameters
         angle_label = Group(
                     Label(label="""If all the sample mounting angles are zero, the sample's crystal
@@ -231,7 +231,7 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
             label="Sample mounting"),
             resizable=True
             )
-            
+
         #Make it into a control, put it in the notebook
         self.control_manual = self.crystal.edit_traits(parent=self.panelManual, view=self.view_manual, kind='subpanel', handler=self.handler).control
         self.notebook.AddPage(self.panelManual, "Manually Enter Lattice")

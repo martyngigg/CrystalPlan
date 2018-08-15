@@ -29,9 +29,9 @@ from model.crystals import Crystal
 #=========================================================
 #=========================================================
 #=========================================================
-[wxID_PANELSAMPLE, wxID_PANELSAMPLEBUTTONAPPLYRANGE, 
- wxID_PANELSAMPLEBUTTONEDITCRYSTAL, wxID_PANELSAMPLEBUTTONREVERTRANGE, 
- wxID_PANELSAMPLESTATICLINE1, wxID_PANELSAMPLESTATICTEXTRANGEHEADER, 
+[wxID_PANELSAMPLE, wxID_PANELSAMPLEBUTTONAPPLYRANGE,
+ wxID_PANELSAMPLEBUTTONEDITCRYSTAL, wxID_PANELSAMPLEBUTTONREVERTRANGE,
+ wxID_PANELSAMPLESTATICLINE1, wxID_PANELSAMPLESTATICTEXTRANGEHEADER,
 ] = [wx.NewId() for _init_ctrls in range(6)]
 
 #=========================================================
@@ -192,21 +192,28 @@ class PanelSample(wx.Panel):
         self._init_ctrls(parent)
 
         vector_format = "%.3f"
+        lattice_lengths_arr = Array( shape=(1, 3), dtype=Float)
+        lattice_angles_deg_arr = Array( shape=(1, 3), dtype=Float)
+        ub_matrix = Array(shape=(3,3), dtype=Float)
+
+        a = Array(shape=(1,3), dtype=Float)
+        b = Array(shape=(1,3), dtype=Float)
+        c = Array(shape=(1,3), dtype=Float)
         #Make a simple, mostly read-only view for the crystal
         self.crystal_view = View(
             Item("name", label="Crystal Name"),
             Item("description", label="Description:", editor=TextEditor(multi_line=True)),
-            Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", format_str="%.3f", style='readonly'),
-            Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", format_str="%.3f", style='readonly'),
-            Item("ub_matrix", label="Sample's UB Matrix", style='readonly', format_str="%9.5f"),
+            Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", style='readonly'),
+            Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", style='readonly'),
+            Item("ub_matrix", label="Sample's UB Matrix", style='readonly'),
             Item("point_group_name", label="Point Group", style='readonly'),
             Item("reflection_condition_name", label="Reflection Condition", style='readonly'),
 #            Item("recip_a", label="a*", style='readonly'),
 #            Item("recip_b", label="b*", style='readonly'),
 #            Item("recip_c", label="c*", style='readonly'),
-            Item("a", label="a vector", format_str=vector_format, style='readonly'),
-            Item("b", label="b vector", format_str=vector_format, style='readonly'),
-            Item("c", label="c vector", format_str=vector_format, style='readonly'),
+            Item("a", label="a vector", style='readonly'),
+            Item("b", label="b vector", style='readonly'),
+            Item("c", label="c vector", style='readonly'),
             resizable=True
             )
 
@@ -235,7 +242,7 @@ class PanelSample(wx.Panel):
         self.GetSizer().Layout()
         #Also update the range settings
         self.range_settings.read_from_exp(model.experiment.exp)
-        
+
 
     #------------------------------------------------------------------
     def update_current(self):
@@ -278,13 +285,13 @@ class PanelSample(wx.Panel):
 
         #Recalculate peaks here.
         model.experiment.exp.recalculate_reflections(None, calculation_callback=self._calculation_progress_report)
-        
+
         #Clean up progress dialog
         self.prog_dlg.Destroy()
 
         #Manually send message to redraw
         model.messages.send_message(model.messages.MSG_EXPERIMENT_REFLECTIONS_CHANGED)
-        
+
     #---------------------------------------------------------------------------
     def _calculation_progress_report(self, poscov):
         """Callback to show progress during a calculation."""
@@ -296,7 +303,7 @@ class PanelSample(wx.Panel):
     def OnButtonEditCrystalButton(self, event):
         """Clicking the button to change the crystal settings."""
         old_U = model.experiment.exp.crystal.get_u_matrix()
-        
+
         if dialog_edit_crystal.show_dialog(self, model.experiment.exp.crystal):
             self.OnReturningFromEditCrystal(old_U)
 
@@ -379,4 +386,4 @@ if __name__=="__main__":
     (app, pnl) = gui_utils.test_my_gui(PanelSample)
     app.MainLoop()
 
-    
+

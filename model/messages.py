@@ -10,7 +10,7 @@ import wx
 try:
     from wx.lib.pubsub import Publisher as pub
 except:
-    from wx.lib.pubsub import pub
+    from pubsub import pub
 from threading import Thread
 import time
 
