@@ -7,12 +7,12 @@ Class definitions for detector geometries.
 
 #--- General Imports ---
 import numpy as np
-import weave
 
 #--- Model Imports ---
 import numpy_utils
 import utils
 from numpy_utils import rotation_matrix, x_rotation_matrix, column, vector_length
+import crystal_plan_c_ext as ct
 
 
 #========================================================================================================
@@ -258,177 +258,19 @@ class FlatDetector(Detector):
         v_out = np.zeros( array_size )
         wl_out = np.zeros( array_size )
         distance_out = np.zeros( array_size )
-        hits_it = np.zeros( array_size, dtype=bool )
-
-        #The abs() call might be screwed up!
-        support = """
-        #define FLOAT float
-        FLOAT absolute(FLOAT x)
-        {
-            if (x > 0.0)
-            { return x; }
-            else
-            { return -x; }
-        }
-        """
-        code = """
-        FLOAT az, elev;
-        FLOAT bx,by,bz;
-        FLOAT x,y,z, temp;
-        FLOAT h,v,d;
-        FLOAT diff_x, diff_y, diff_z;
-
-        //some vars
-        FLOAT base_point_x = base_point[0];
-        FLOAT base_point_y = base_point[1];
-        FLOAT base_point_z = base_point[2];
-        FLOAT horizontal_x = horizontal[0];
-        FLOAT horizontal_y = horizontal[1];
-        FLOAT horizontal_z = horizontal[2];
-        FLOAT vertical_x = vertical[0];
-        FLOAT vertical_y = vertical[1];
-        FLOAT vertical_z = vertical[2];
-        FLOAT nx = normal[0];
-        FLOAT ny = normal[1];
-        FLOAT nz = normal[2];
-        FLOAT n_dot_base_f = FLOAT(n_dot_base);
-
-        int i;
-        int error_count = 0;
-        int bad_beam = 0;
-        FLOAT projection, beam_length,  wavelength;
-
-        for (i=0; i<array_size; i++)
-        {
-            //Good beam, nice beam.
-            bad_beam = 0;
-
-            // Non-normalized beam direction
-            bx=BEAM2(0,i);
-            by=BEAM2(1,i);
-            bz=BEAM2(2,i);
-
-            // So we normalize it
-            beam_length = sqrt(bx*bx + by*by + bz*bz);
-            bx = bx/beam_length;
-            by = by/beam_length;
-            bz = bz/beam_length;
-
-            //Check if the wavelength is within range
-            wavelength = 6.2831853071795862/beam_length;
-
-            //If there are any nan's in the beam direction, this next check will return false.
-            if ((wavelength <= wl_max) && (wavelength >= wl_min))
-            {
-                //Wavelength in range! Keep going.
-
-                //Make sure the beam points in the same direction as the detector, not opposite to it
-                // project beam onto detector's base_point
-                projection = (base_point_x*bx)+(base_point_y*by)+(base_point_z*bz);
-                if (projection > 0)
-                {
-                    //beam points towards the detector
-
-                    //This beam coincides with the origin (0,0,0)
-                    //Therefore the line equation is x/bx = y/by = z/bz
-
-                    //Now we look for the intersection between the plane of normal nx,ny,nz and the given angle.
-
-                    //Threshold to avoid divide-by-zero
-                    FLOAT min = 1e-6;
-                    if ((absolute(bz) > min)) // && (absolute(nz) > min))
-                    {
-                        z = n_dot_base_f / ((nx*bx)/bz + (ny*by)/bz + nz);
-                        temp = (z / bz);
-                        y = by * temp;
-                        x = bx * temp;
-                    }
-                    else if ((absolute(by) > min)) //  && (absolute(ny) > min))
-                    {
-                        y = n_dot_base_f / (nx*bx/by + ny + nz*bz/by);
-                        temp = (y / by);
-                        x = bx * temp;
-                        z = bz * temp;
-                    }
-                    else if ((absolute(bx) > min)) //  && (absolute(nx) > min))
-                    {
-                        x = n_dot_base_f / (nx + ny*by/bx + nz*bz/bx);
-                        temp = (x / bx);
-                        y = by * temp;
-                        z = bz * temp;
-                    }
-                    else
-                    {
-                        // The scattered beam is 0,0,0
-                        error_count += 1;
-                        bad_beam = 1;
-                    }
-                }
-                else
-                {
-                    //The projection is <0
-                    // means the beam is opposite the detector. BAD BEAM! No cookie!
-                    bad_beam = 1;
-                }
-            }
-            else
-            {
-                //Wavelength is out of range. Can't measure it!
-                bad_beam = 1;
-            }
-
-
-            if (bad_beam)
-            {
-                //A bad beam means it does not hit, for sure.
-                h_out[i] = NAN;
-                v_out[i] = NAN;
-                wl_out[i] = wavelength; //This may be NAN too, for NAN inputs.
-                hits_it[i] = 0;
-            }
-            else
-            {
-                //Valid beam calculation
-                //Difference between this point and the base point (the center)
-                diff_x = x - base_point_x;
-                diff_y = y - base_point_y;
-                diff_z = z - base_point_z;
-
-                //Project onto horizontal and vertical axes by doing a dot product
-                h = diff_x*horizontal_x + diff_y*horizontal_y + diff_z*horizontal_z;
-                v = diff_x*vertical_x + diff_y*vertical_y + diff_z*vertical_z;
-
-                // Save to matrix
-                h_out[i] = h;
-                v_out[i] = v;
-
-                // the scattered beam is 1/wl long.
-                wl_out[i] = wavelength;
-
-                //What was the distance to the detector spot?
-                distance_out[i] = sqrt(x*x + y*y + z*z);
-
-                // And do we hit that detector?
-                // Detector is square and our h,v coordinates are relative to the center of it.
-                hits_it[i] = (v > -height/2) && (v < height/2) && (h > -width/2) && (h < width/2);
-            }
-        }
-        return_val = error_count;
-        """
-
-        #Generate a list of the variables used
-        varlist = ['base_point', 'horizontal', 'vertical', 'normal']
-        #Dump them in the locals namespace
-        for var in varlist: locals()[var] = getattr(self, var).flatten()
-        width = self.width
+        hits_it = np.zeros( array_size, dtype=np.bool)
         height = self.height
-        varlist += ['h_out', 'v_out', 'wl_out', 'distance_out', 'hits_it']
-        varlist += ['beam', 'array_size', 'n_dot_base', 'height', 'width', 'wl_min', 'wl_max']
-        #Run the code
-        error_count = weave.inline(code, varlist, compiler='gcc', support_code = support,libraries = ['m'])
+        width = self.width
 
-        #if error_count>0: print "error_count", error_count
-#        positions = np.concatenate( (h_out, v_out, wl_out), 0)
+        ##Run the code
+        error_cout = ct.get_detector_coordinates(self.base_point.flatten(), self.horizontal.flatten(),
+                                    self.vertical.flatten(), self.normal.flatten(), h_out, v_out,
+                                    wl_out, distance_out, hits_it, beam,
+                                    int(array_size), n_dot_base, int(height), int(width),
+                                    wl_min, wl_max)
+
+        ##if error_count>0: print "error_count", error_count
+##        positions = np.concatenate( (h_out, v_out, wl_out), 0)
         return (h_out, v_out, wl_out, distance_out, hits_it)
 
 
@@ -884,7 +726,7 @@ class TestHitsFlatDetector(unittest.TestCase):
 
         beam = column([10.0, 0.0, 0.0])*2*pi
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose( wl, 0.1), "Correct wavelength for one"
+        self.assertAlmostEqual(wl, 0.1)
         beam = column([10.0, 20.0, 30.0])*2*pi
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
         assert np.allclose( wl, 1/np.sqrt(1400)), "Correct wavelength 2"

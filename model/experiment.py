@@ -10,7 +10,6 @@ import warnings
 import numpy as np
 import time
 import threading
-import weave
 import scipy.ndimage
 from cPickle import loads, dumps
 import os
@@ -24,6 +23,7 @@ import numpy_utils
 from crystals import Crystal
 from reflections import Reflection, ReflectionRealMeasurement
 import crystal_calc
+import crystal_plan_c_ext as ct
 from numpy_utils import *
 import utils
 
@@ -1641,73 +1641,10 @@ class Experiment:
 
         else:
             #--------------- Inline C version (about 17x faster than Python) ---------------
-            code = """
-
-            //-- Calculate  the hkl array ---
-            int ix, iy, iz;
-            int eix, eiy, eiz, eindex;
-            int index, ord;
-            double qx, qy, qz;
-            double eqx, eqy, eqz;
-            double h, k, l;
-            double eh, ek, el;
-            for (ix=0; ix<n; ix++)
-            {
-                qx = ix*qres - qlim;
-                for (iy=0; iy<n; iy++)
-                {
-                    qy = iy*qres - qlim;
-                    for (iz=0; iz<n; iz++)
-                    {
-                        qz = iz*qres - qlim;
-                        index = iz + iy*n + ix*n*n;
-                        //Ok, now we matrix multiply invB.hkl to get all the HKLs as a column array
-                        h = qx * INVB2(0,0) + qy * INVB2(0,1) + qz * INVB2(0,2);
-                        k = qx * INVB2(1,0) + qy * INVB2(1,1) + qz * INVB2(1,2);
-                        l = qx * INVB2(2,0) + qy * INVB2(2,1) + qz * INVB2(2,2);
-
-                        //Now go through each equivalency table.
-                        for (ord=0; ord<order; ord++)
-                        {
-                            //Do TABLE.hkl to find a new equivalent hkl
-                            eh = h * TABLE3(ord, 0,0) + k * TABLE3(ord, 0,1) + l * TABLE3(ord, 0,2);
-                            ek = h * TABLE3(ord, 1,0) + k * TABLE3(ord, 1,1) + l * TABLE3(ord, 1,2);
-                            el = h * TABLE3(ord, 2,0) + k * TABLE3(ord, 2,1) + l * TABLE3(ord, 2,2);
-                            //Now, matrix mult B . equiv_hkl to get the other q vector
-                            eqx = eh * B2(0,0) + ek * B2(0,1) + el * B2(0,2);
-                            eqy = eh * B2(1,0) + ek * B2(1,1) + el * B2(1,2);
-                            eqz = eh * B2(2,0) + ek * B2(2,1) + el * B2(2,2);
-
-                            //Ok, now you have to find the index into QSPACE
-                            eix = round( (eqx+qlim)/qres ); if ((eix >= n) || (eix < 0)) eix = -1;
-                            eiy = round( (eqy+qlim)/qres ); if ((eiy >= n) || (eiy < 0)) eiy = -1;
-                            eiz = round( (eqz+qlim)/qres ); if ((eiz >= n) || (eiz < 0)) eiz = -1;
-
-                            if ((eix < 0) || (eiy < 0) || (eiz < 0))
-                            {
-                                //One of the indices was out of bounds.
-                                //Put this marker to mean NO EQUIVALENT
-                                SYMM2(index, ord) = -1;
-                            }
-                            else
-                            {
-                                //No problem!, Now I put it in there
-                                eindex = eiz + eiy*n + eix*n*n;
-                                //This pixel (index) has this equivalent pixel index (eindex) for this order transform ord.
-                                SYMM2(index, ord) = eindex;
-                            }
-
-                        }
-
-                    }
-                }
-            }
-            """
             qres = inst.q_resolution
             n = len(self.inst.qx_list)
             table = np.array(pg.table) #Turn the list of 3x3 arrays into a Nx3x3 array
-            varlist = ['B', 'invB', 'symm', 'qres', 'qlim', 'n', 'order', 'table']
-            weave.inline(code, varlist, compiler='gcc', support_code="")
+            symm = ct.make_volume_symmetry_map(B, invB, symm, qres, qlim, n, order, table)
 
         #Done with either version
         self.volume_symmetry = symm
@@ -1761,28 +1698,7 @@ class Experiment:
             #Put some variables in the workspace
             old_q = self.qspace.flatten() * 1.0
             qspace_flat = old_q * 0.0
-
-            support = ""
-            code = """
-            int pix, ord, index;
-            for (pix=0; pix<numpix; pix++)
-            {
-                //Go through each pixel
-                for (ord=0; ord<order; ord++)
-                {
-                    //Now go through each equivalent q.
-                    index = SYMM2(pix, ord);
-                    if (index >= 0)
-                    {
-                        //Valid index.
-                        QSPACE_FLAT1(pix) += OLD_Q1(index);
-                        //printf("%d\\n", index);
-                    }
-                }
-            }
-            """
-            varlist = ['old_q', 'qspace_flat', 'numpix', 'order', 'symm']
-            weave.inline(code, varlist, compiler='gcc', support_code=support)
+            qspace_flat = ct.apply_volume_symmetry(old_q, qspace_flat, numpix, order, symm)
             #Reshape it back as a 3D array.
             n = len(self.inst.qx_list)
             self.qspace = qspace_flat.reshape( (n,n,n) )
@@ -1976,69 +1892,10 @@ class Experiment:
             qspace = self.qspace.flatten()
             qspace_size = qspace.size
 
-            support = ""
-            code = """
-            int i, j;
-            int slice;
-            int val;
-            int overall_points = 0;
-            int overall_covered_points = 0;
-            int overall_redundant_points = 0;
-
-            for (i=0; i<qspace_size; i++)
-            {
-                //Coverage value at this points
-                val = QSPACE1(i);
-
-                //Do the overall stats
-                if (QSPACE_RADIUS1(i) < qlim)
-                {
-                    //But only within the sphere
-                    overall_points++;
-                    if (val > 0)
-                    {
-                        overall_covered_points++;
-                        if (val > 1)
-                        {
-                            overall_redundant_points++;
-                        }
-                    }
-                }
-
-                //Which slice are we looking at?
-                slice = QSPACE_RADIUS1(i) / q_step;
-                if ((slice < num) && (slice >= 0))
-                {
-                    total_points[slice]++;
-                    if (val>0)
-                    {
-                        covered_points0[slice]++;
-                        if (val>1)
-                        {
-                            covered_points1[slice]++;
-                            if (val>2)
-                            {
-                                covered_points2[slice]++;
-                                if (val>3)
-                                {
-                                    covered_points3[slice]++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            //Return as a tuple
-            py::tuple results(3);
-            results[0] = overall_points;
-            results[1] = overall_covered_points;
-            results[2] = overall_redundant_points;
-            return_val = results;
-            """
-            ret_val = weave.inline(code,['qspace', 'qspace_radius', 'q_step', 'qlim', 'total_points', 'qspace_size', 'num', 'covered_points0', 'covered_points1', 'covered_points2', 'covered_points3'],
-                                compiler='gcc', support_code = support)
+            results = ct.calculate_coverage_stats(qspace, qspace_radius, q_step, qlim, total_points, qspace_size, num, covered_points0, covered_points1, covered_points2, covered_points3)
             #The function returns a tuple
-            (overall_points, overall_covered_points, overall_redundant_points) = ret_val
+            stats, total_points, covered_points0, covered_points1, covered_points2, covered_points3 = results
+            (overall_points, overall_covered_points, overall_redundant_points) = stats
 
             #Overall stats
             self.overall_coverage = 100.0 * overall_covered_points / overall_points;
