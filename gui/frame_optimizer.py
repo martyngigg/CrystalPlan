@@ -28,7 +28,7 @@ if __name__=="__main__":
     #Manipulate the PYTHONPATH to put model directly in view of it
     import sys
     sys.path.insert(0, "..")
-    
+
 
 
 #-------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ class PlotPanelGAStats(PlotPanel):
         """Make a plot of the raw score with error bars."""
         if not hasattr( self, 'subplot' ):
             self.subplot = self.figure.add_subplot( 111 )
-            
+
         x = []
         y = []
         yerr_max = []
@@ -135,6 +135,7 @@ class PlotPanelGAStats(PlotPanel):
         self.subplot.set_title("Evolution of coverage")
         #Signal refresh?
         self._resizeflag = True
+        self.figure.canvas.draw()
 
 
 #================================================================================================
@@ -170,7 +171,7 @@ class OptimizationThread(threading.Thread):
             self.controller.restore_buttons()
         finally:
             self.controller.params.optimization_running = False
-            
+
 
 #================================================================================================
 #================================================================================================
@@ -268,14 +269,14 @@ class OptimizerController():
 #        if s:
 #            wx.MessageDialog("Number of sample orientations has changed. Cannot keep going with the old population.").ShowModal()
 #            return;
-        
+
         if (self.params.population != len(self.last_population)) or (self.last_population[0].listSize != self.params.number_of_orientations):
             wx.MessageDialog(self.frame, "Population size/number of orientations changed. The new population will be selected randomly from the old one, and may not be as good.", style=wx.OK).ShowModal()
-        
+
         self._want_abort = False
         self.start_time = time.time()
         self.init_data()
-        
+
         #Start the thread
         self.params.use_old_population = True
         self.params.add_trait("old_population", self.last_population)
@@ -295,7 +296,7 @@ class OptimizerController():
         self._want_abort = True
         #Will have to wait for the next generation to stop
         if not event is None: event.Skip()
-        
+
     #--------------------------------------------------------------------
     def close_form(self, event, *args):
         """Call when the form is closing. Aborth the thread if it is running."""
@@ -331,7 +332,7 @@ class OptimizerController():
     #--------------------------------------------------------------------
     def complete(self, ga, aborted, converged):
         """Called when the optimization completes.
-        
+
         Parameters:
             ga: the GSimpleGA instance
             aborted: True if the optimization was aborted manually
@@ -363,14 +364,14 @@ class OptimizerController():
             #Done!
             print "Optimization finished in %.3f seconds." % (time.time() - self.start_time)
 
-        
+
     #--------------------------------------------------------------------
     def step_callback(self, ga, *args):
         """Callback during evolution; used to abort it and to display
         stats."""
         #@type ga GSimpleGA
         op = self.params #@type op OptimizationParameters
-        
+
         #Find the best individual
         self.best = ga.bestIndividual()
         self.best_coverage = self.best.coverage
@@ -381,7 +382,7 @@ class OptimizerController():
         self.currentGeneration = ga.currentGeneration
         #Log the stats too
         self.add_data(ga)
-        
+
         #Adjust settings while going on
         model.optimization.set_changeable_parameters(op, ga)
 
@@ -405,7 +406,7 @@ class OptimizerController():
 
         # Get the angles of the best one
         positions += model.optimization.get_angles(self.best)
-            
+
         print "Applying best individual", self.best
 
         #This deletes everything in the list in the instrument
@@ -419,7 +420,7 @@ class OptimizerController():
 
         #GUI update
         model.messages.send_message(model.messages.MSG_POSITION_LIST_CHANGED)
-        
+
         #Add it to the list of selected items
         if len(model.instrument.inst.angles) == 1:
 	    model.instrument.inst.sort_positions_by(0)
@@ -427,7 +428,7 @@ class OptimizerController():
 
         if not event is None: event.Skip()
 
-        
+
 
 
 
@@ -438,14 +439,14 @@ class OptimizerController():
 #================================================================================================
 #================================================================================================
 [wxID_FRAMEOPTIMIZER, wxID_FRAMEOPTIMIZERbuttonKeepGoing,
- wxID_FRAMEOPTIMIZERBUTTONAPPLY, wxID_FRAMEOPTIMIZERBUTTONSTART, 
- wxID_FRAMEOPTIMIZERBUTTONSTOP, wxID_FRAMEOPTIMIZERGAUGECOVERAGE, 
- wxID_FRAMEOPTIMIZERGAUGEGENERATION, wxID_FRAMEOPTIMIZERPANELPARAMS, 
- wxID_FRAMEOPTIMIZERPANELSTATUS, wxID_FRAMEOPTIMIZERSPLITTERMAIN, 
- wxID_FRAMEOPTIMIZERSTATICLINE1, wxID_FRAMEOPTIMIZERSTATICTEXT1, 
- wxID_FRAMEOPTIMIZERSTATICTEXTCOVERAGE, 
- wxID_FRAMEOPTIMIZERSTATICTEXTGENERATION, 
- wxID_FRAMEOPTIMIZERSTATICTEXTRESULTS, wxID_FRAMEOPTIMIZERTEXTSTATUS, 
+ wxID_FRAMEOPTIMIZERBUTTONAPPLY, wxID_FRAMEOPTIMIZERBUTTONSTART,
+ wxID_FRAMEOPTIMIZERBUTTONSTOP, wxID_FRAMEOPTIMIZERGAUGECOVERAGE,
+ wxID_FRAMEOPTIMIZERGAUGEGENERATION, wxID_FRAMEOPTIMIZERPANELPARAMS,
+ wxID_FRAMEOPTIMIZERPANELSTATUS, wxID_FRAMEOPTIMIZERSPLITTERMAIN,
+ wxID_FRAMEOPTIMIZERSTATICLINE1, wxID_FRAMEOPTIMIZERSTATICTEXT1,
+ wxID_FRAMEOPTIMIZERSTATICTEXTCOVERAGE,
+ wxID_FRAMEOPTIMIZERSTATICTEXTGENERATION,
+ wxID_FRAMEOPTIMIZERSTATICTEXTRESULTS, wxID_FRAMEOPTIMIZERTEXTSTATUS,
 ] = [wx.NewId() for _init_ctrls in range(16)]
 
 #================================================================================================
