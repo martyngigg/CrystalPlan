@@ -33,6 +33,7 @@ from goniometer import Goniometer, TopazInHouseGoniometer
 from detectors import Detector, FlatDetector, CylindricalDetector
 import config
 import utils
+import crystal_plan_c_ext as ct
 
 #--- Multiprocessing check ---
 try:
@@ -326,8 +327,9 @@ class Instrument:
                 cylindrical = True
 
             # Skip other comment rows
-            lines = filter(lambda line: len(line) > 0 and line[0][0] != '#', list(reader))
+            lines = filter(lambda line: len(line) > 0 and "#" not in line[0], list(reader))
 
+            print lines
             count = 1
             for row in lines:
                 if cylindrical:
@@ -819,7 +821,7 @@ class Instrument:
 
         #Start with zeros
         number_of_ints = self.get_coverage_number_of_ints()
-        coverage = self.make_blank_qspace(np.uint32, number_of_ints=number_of_ints)
+        coverage = self.make_blank_qspace(np.int, number_of_ints=number_of_ints)
         count = 0
         if self.verbose: sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
         for det in det_list:
@@ -848,9 +850,15 @@ class Instrument:
             (wl_min, wl_max) = self.get_wavelength_range(angles)
 
             #Two nearby pixels
-            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], wl_min, rot_matrix)
-            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], wl_min, rot_matrix)
-            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], wl_min, rot_matrix)
+            if use_inline_c and not config.cfg.force_pure_python:
+                q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], wl_min, rot_matrix)
+                q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], wl_min, rot_matrix)
+                q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], wl_min, rot_matrix)
+            else:
+                q0 = getq_python(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], wl_min, rot_matrix)
+                q_xmax = getq_python(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], wl_min, rot_matrix)
+                q_ymax = getq_python(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], wl_min, rot_matrix)
+
 
             #Make sure they aren't too long
             q0 = shrink_q_vector(q0)
@@ -900,8 +908,16 @@ class Instrument:
                 attribute_list = ['qlim', 'q_resolution']
                 for var in attribute_list: locals()[var] = getattr(self, var)
                 varlist += attribute_list
-                #Run the C code (see between function declarations for the actual code).
-                weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
+                # Run the C code (see between function declarations for the actual code).
+                # weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
+                xlist = np.array(xlist)
+                ylist = np.array(ylist)
+
+                coverage = ct.calculate_coverage(xlist, ylist, azimuthal_angle,
+                                      elevation_angle, rot_matrix, set_value1,
+                                      set_value2, number_of_ints, coverage,
+                                      stride, max_index, wl_min, wl_max,
+                                      self.qlim, self.q_resolution)
 
             else:
                 #-------- Pure Python ---------
@@ -912,8 +928,8 @@ class Instrument:
                         elev = det.elevation_angle[iy, ix]
 
                         #Now we find the reciprocal vector r=1/d which corresponds to this point on the ewald sphere.
-                        q_min = getq(az, elev, wl_min, rot_matrix)
-                        q_max = getq(az, elev, wl_max, rot_matrix)
+                        q_min = getq_python(az, elev, wl_min, rot_matrix)
+                        q_max = getq_python(az, elev, wl_max, rot_matrix)
                         #Cap to qlim
                         q_min = shrink_q_vector(q_min)
                         q_max = shrink_q_vector(q_max)
@@ -1088,7 +1104,7 @@ class Instrument:
         number_of_ints = self.get_coverage_number_of_ints()
 
         #Now we add up the coverages together
-        if config.cfg.force_pure_python or not use_inline_c:
+        if config.cfg.force_pure_python or not use_inline_c or True:
             #--- Pure Python Version ---
             for one_coverage in coverage_list:
                 #By applying the mask and the >0 we take away any unwanted detectors.
@@ -1480,8 +1496,14 @@ class InstrumentInelastic(Instrument):
                 for var in attribute_list: locals()[var] = getattr(self, var)
                 varlist += attribute_list
                 #Run the C code (see between function declarations for the actual code).
-                weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
-
+                # weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
+                ct.calculate_coverage_inelastic(wl_input, xlist, ylist, azimuthal_angle,
+                                                elevation_angle, np.pi,
+                                                rot_matrix, set_value1,
+                                                set_value2, number_of_ints,
+                                                coverage, stride, max_index,
+                                                wl_min, wl_max, qlim,
+                                                q_resolution)
                 print "C-code: neutron energy gain min", np.min(coverage), "; max", np.max(coverage[coverage <1e6])
 
             else:

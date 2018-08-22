@@ -27,6 +27,7 @@ import weave
 import numpy_utils
 from numpy_utils import column, vector_length, rotation_matrix, get_translated_vectors, nearest_index
 import utils
+import crystal_plan_c_ext as ct
 
 #--- Traits Imports ---
 from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
@@ -583,6 +584,15 @@ class LimitedGoniometer(Goniometer):
         else:
             return ret
 
+    def get_params(self):
+        args = []
+        for i in xrange(3):
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        return np.array(args)
+
+    def get_fit_func_name(self):
+        return "general"
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -866,15 +876,26 @@ class LimitedGoniometer(Goniometer):
         code += "\n\n // " + self.__class__.__name__ + "\n"
         code += "/* " + self.get_fitness_function_c_code() + " */"
 
-        #List of fitnesses
+        ##List of fitnesses
         fitnesses = []
         chi_list = []
         phi_list = []
         omega_list = []
 
-        #Prepare variables, run the C code
+        size = rot_angle_list.size*3
+        fitnesses = np.zeros(size)
+        chi_list = np.zeros(size)
+        phi_list = np.zeros(size)
+        omega_list = np.zeros(size)
+
+        params = self.get_params()
+        func_name = self.get_fit_func_name()
+
+        ##Prepare variables, run the C code
         varlist = ['rot_angle_list', 'ending_vec', 'initial_rotation_matrix', 'fitnesses', 'chi_list', 'phi_list', 'omega_list']
-        ret = weave.inline(code, varlist, compiler='gcc', support_code=support)
+        # ret = weave.inline(code, varlist, compiler='gcc', support_code=support)
+        print rot_angle_list.shape, ending_vec.shape, initial_rotation_matrix.shape, params.shape
+        ct.angle_fitness(rot_angle_list, ending_vec, initial_rotation_matrix, fitnesses, chi_list, phi_list, omega_list, func_name, params)
 
         #Test that the resulting matrix is still OK
         if False:
@@ -1067,6 +1088,20 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
             (np.deg2rad(self.chi) == other.chi)
 
     #-------------------------------------------------------------------------
+    def get_params(self):
+        args = []
+        for i in xrange(1):
+            # Each angle
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        # Last argument is the fixed chi value.
+        args.append( np.deg2rad(self.chi) )
+        return np.array(args)
+
+    def get_fit_func_name(self):
+        return "snap"
+
+    #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
         #C code for the fitness of phi,chi, omega.
         args = []
@@ -1215,6 +1250,13 @@ class MandiGoniometer(LimitedGoniometer):
             (np.deg2rad(self.omega) == other.omega)
 
     #-------------------------------------------------------------------------
+    def get_params(self):
+        return np.array([])
+
+    def get_fit_func_name(self):
+        return "mandi"
+
+    #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
         """C code for the fitness of phi,chi, omega.
         Fitness is always good since the goniometer has no limits"""
@@ -1337,6 +1379,19 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
             (np.deg2rad(self.chi) == other.chi)
+
+    #-------------------------------------------------------------------------
+    def get_params(self):
+        args = []
+        for i in xrange(2):
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        # Last argument is the fixed chi value.
+        args.append( np.deg2rad(self.chi) )
+        return np.array(args)
+
+    def get_fit_func_name(self):
+        return "mandi_vary_omega"
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -1487,6 +1542,13 @@ class ImagineGoniometer(LimitedGoniometer):
             (np.deg2rad(self.chi) == other.chi)
 
     #-------------------------------------------------------------------------
+    def get_params(self):
+        return np.array([])
+
+    def get_fit_func_name(self):
+        return "mandi"
+
+    #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
         """C code for the fitness of phi,chi, omega.
         Fitness is always good since the goniometer has no limits"""
@@ -1606,6 +1668,18 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
             AngleInfo('Kappa', friendly_range=[0, 255], random_range=[0, 4.4505895926 ]),
             AngleInfo('Omega', friendly_range=[0, 354], random_range=[0, 6.1784655521 ]),
             ]
+
+    #-------------------------------------------------------------------------
+    def get_params(self):
+        args = []
+        for i in xrange(2):
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        args.append( np.deg2rad(self.chi) )
+        return np.array([args])
+
+    def get_fit_func_name(self):
+        return "mandi_vary_omega"
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -1751,6 +1825,19 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
             (np.deg2rad(self.chi) == other.chi)
+
+    #-------------------------------------------------------------------------
+    def get_params(self):
+        args = []
+        for i in xrange(2):
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        # Last argument is the fixed chi value.
+        args.append( np.deg2rad(self.chi) )
+        return np.array(args)
+
+    def get_fit_func_name(self):
+        return "mandi_vary_omega"
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -2634,6 +2721,12 @@ class HB3AGoniometer(LimitedGoniometer):
             AngleInfo('Detector', friendly_range=[-1, 95]),
             ]
 
+    #-------------------------------------------------------------------------
+    def get_params(self):
+        return np.array([])
+
+    def get_fit_func_name(self):
+        return "HB3A"
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -2714,6 +2807,19 @@ class CorelliGoniometer(LimitedGoniometer):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
             (np.deg2rad(self.omega) == other.omega)
+
+    #-------------------------------------------------------------------------
+    def get_params(self):
+        args = []
+        for i in xrange(2):
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        # Last argument is the fixed chi value.
+        args.append( np.deg2rad(self.omega) )
+        return np.array(args)
+
+    def get_fit_func_name(self):
+        return "mandi_vary_omega"
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):

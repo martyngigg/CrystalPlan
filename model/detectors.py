@@ -13,6 +13,7 @@ import weave
 import numpy_utils
 import utils
 from numpy_utils import rotation_matrix, x_rotation_matrix, column, vector_length
+import crystal_plan_c_ext as ct
 
 
 #========================================================================================================
@@ -258,7 +259,7 @@ class FlatDetector(Detector):
         v_out = np.zeros( array_size )
         wl_out = np.zeros( array_size )
         distance_out = np.zeros( array_size )
-        hits_it = np.zeros( array_size, dtype=bool )
+        hits_it = np.zeros( array_size, dtype=float)
 
         #The abs() call might be screwed up!
         support = """
@@ -424,11 +425,17 @@ class FlatDetector(Detector):
         height = self.height
         varlist += ['h_out', 'v_out', 'wl_out', 'distance_out', 'hits_it']
         varlist += ['beam', 'array_size', 'n_dot_base', 'height', 'width', 'wl_min', 'wl_max']
-        #Run the code
-        error_count = weave.inline(code, varlist, compiler='gcc', support_code = support,libraries = ['m'])
 
-        #if error_count>0: print "error_count", error_count
-#        positions = np.concatenate( (h_out, v_out, wl_out), 0)
+        ##Run the code
+        # error_count = weave.inline(code, varlist, compiler='gcc', support_code = support,libraries = ['m'])
+        error_cout = ct.get_detector_coordinates(self.base_point.flatten(), self.horizontal.flatten(),
+                                    self.vertical.flatten(), self.normal.flatten(), h_out, v_out,
+                                    wl_out, distance_out, hits_it, beam.flatten(),
+                                    int(array_size), n_dot_base, int(height), int(width),
+                                    wl_min, wl_max)
+
+        ##if error_count>0: print "error_count", error_count
+##        positions = np.concatenate( (h_out, v_out, wl_out), 0)
         return (h_out, v_out, wl_out, distance_out, hits_it)
 
 
@@ -884,7 +891,7 @@ class TestHitsFlatDetector(unittest.TestCase):
 
         beam = column([10.0, 0.0, 0.0])*2*pi
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose( wl, 0.1), "Correct wavelength for one"
+        self.assertAlmostEqual(wl, 0.1)
         beam = column([10.0, 20.0, 30.0])*2*pi
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
         assert np.allclose( wl, 1/np.sqrt(1400)), "Correct wavelength 2"

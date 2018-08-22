@@ -24,6 +24,7 @@ import numpy_utils
 from crystals import Crystal
 from reflections import Reflection, ReflectionRealMeasurement
 import crystal_calc
+import crystal_plan_c_ext as ct
 from numpy_utils import *
 import utils
 
@@ -1707,7 +1708,8 @@ class Experiment:
             n = len(self.inst.qx_list)
             table = np.array(pg.table) #Turn the list of 3x3 arrays into a Nx3x3 array
             varlist = ['B', 'invB', 'symm', 'qres', 'qlim', 'n', 'order', 'table']
-            weave.inline(code, varlist, compiler='gcc', support_code="")
+            # weave.inline(code, varlist, compiler='gcc', support_code="")
+            symm = ct.make_volume_symmetry_map(B, invB, symm, qres, qlim, n, order, table)
 
         #Done with either version
         self.volume_symmetry = symm
@@ -1782,7 +1784,8 @@ class Experiment:
             }
             """
             varlist = ['old_q', 'qspace_flat', 'numpix', 'order', 'symm']
-            weave.inline(code, varlist, compiler='gcc', support_code=support)
+            # weave.inline(code, varlist, compiler='gcc', support_code=support)
+            qspace_flat = ct.apply_volume_symmetry(old_q, qspace_flat, numpix, order, symm)
             #Reshape it back as a 3D array.
             n = len(self.inst.qx_list)
             self.qspace = qspace_flat.reshape( (n,n,n) )
@@ -2035,14 +2038,18 @@ class Experiment:
             results[2] = overall_redundant_points;
             return_val = results;
             """
-            ret_val = weave.inline(code,['qspace', 'qspace_radius', 'q_step', 'qlim', 'total_points', 'qspace_size', 'num', 'covered_points0', 'covered_points1', 'covered_points2', 'covered_points3'],
-                                compiler='gcc', support_code = support)
+            # ret_val = weave.inline(code,['qspace', 'qspace_radius', 'q_step', 'qlim', 'total_points', 'qspace_size', 'num', 'covered_points0', 'covered_points1', 'covered_points2', 'covered_points3'],
+            #                     compiler='gcc', support_code = support)
+            results = ct.calculate_coverage_stats(qspace, qspace_radius, q_step, qlim, total_points, qspace_size, num, covered_points0, covered_points1, covered_points2, covered_points3)
             #The function returns a tuple
-            (overall_points, overall_covered_points, overall_redundant_points) = ret_val
+            stats, total_points, covered_points0, covered_points1, covered_points2, covered_points3 = results
+            (overall_points, overall_covered_points, overall_redundant_points) = stats
 
             #Overall stats
             self.overall_coverage = 100.0 * overall_covered_points / overall_points;
             self.overall_redundancy = 100.0 * overall_redundant_points / overall_points;
+
+            print total_points, covered_points0, covered_points1, covered_points2, covered_points3
 
             for i in range(num):
                 #Initialize the CoverageStats object
