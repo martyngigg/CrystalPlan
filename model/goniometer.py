@@ -21,7 +21,6 @@ from string import replace, strip, find
 import numpy as np
 from numpy import array, sin, cos, pi, dot
 import scipy.optimize
-import weave
 
 #--- Model Imports ---
 import numpy_utils
@@ -742,146 +741,6 @@ class LimitedGoniometer(Goniometer):
             best_angles: sample orientation angles corresponding to the given fitness
         """
 
-        #General purpose support code.
-        support = """
-        #define PI 3.14159265358979323846264338327950288
-        #define FLOAT double
-        FLOAT absolute(FLOAT value)
-        {
-            if (value<0) {return -value; }
-            else { return value; }
-        }
-        """
-
-        #Add the function for the fitness
-        support += self.get_fitness_function_c_code()
-
-        code = """
-        FLOAT rot_angle;
-        int angle_num;
-        for (angle_num=0;  angle_num < Nrot_angle_list[0]; angle_num++)
-        {
-            rot_angle = ROT_ANGLE_LIST1(angle_num);
-            //printf("angle of %e\\n", rot_angle);
-            // --- Make the rotation matrix around the ending_vec ----
-            FLOAT c = cos(rot_angle);
-            FLOAT s = sin(rot_angle);
-            FLOAT x,y,z;
-            x = ending_vec[0];
-            y = ending_vec[1];
-            z = ending_vec[2];
-
-            FLOAT extra_rotation_matrix[3][3] = {
-            {1 + (1-c)*(x*x-1), -z*s+(1-c)*x*y, y*s+(1-c)*x*z},
-            {z*s+(1-c)*x*y, 1 + (1-c)*(y*y-1), -x*s+(1-c)*y*z},
-            {-y*s+(1-c)*x*z,  x*s+(1-c)*y*z,  1 + (1-c)*(z*z-1)}
-            };
-
-            // Do matrix multiplication
-            FLOAT total_rot_matrix[3][3];
-
-            int i,j,k;
-            for (i=0; i<3; i++)
-                for (j=0; j<3; j++)
-                {
-                    total_rot_matrix[i][j] = 0;
-                    for (k=0; k<3; k++)
-                    {
-                        total_rot_matrix[i][j] += extra_rotation_matrix[i][k] * INITIAL_ROTATION_MATRIX2(k,j);
-                    }
-                    // printf("%f, ", total_rot_matrix[i][j]);
-                }
-
-            //-------- Now we find angles_from_rotation_matrix() -----------
-            FLOAT chi, phi, omega;
-
-            //#Let's make 3 vectors describing XYZ after rotations
-            FLOAT ux = total_rot_matrix[0][0];
-            FLOAT uy = total_rot_matrix[1][0];
-            FLOAT uz = total_rot_matrix[2][0];
-            FLOAT vx = total_rot_matrix[0][1];
-            FLOAT vy = total_rot_matrix[1][1];
-            FLOAT vz = total_rot_matrix[2][1];
-            FLOAT nx = total_rot_matrix[0][2];
-            FLOAT ny = total_rot_matrix[1][2];
-            FLOAT nz = total_rot_matrix[2][2];
-
-            //#is v.y vertical?
-            if (absolute(vy) < 1e-8)
-            {
-                //#Chi rotation is 0, so we just have a rotation about y
-                chi = 0.0;
-                phi = atan2(nx, nz);
-                omega = 0.0;
-            }
-            else if (absolute(vy+1) < 1e-8)
-            {
-                //#Chi rotation is 180 degrees
-                chi = PI;
-                phi = -atan2(nx, nz);
-                if (phi==-PI) phi=PI;
-                omega = 0.0;
-            }
-            else
-            {
-                //#General case
-                phi = atan2(ny, uy);
-                chi = acos(vy);
-                omega = atan2(vz, -vx);
-            }
-
-            FLOAT fitness;
-            FLOAT old_phi = phi;
-            FLOAT old_chi = chi;
-            FLOAT old_omega = omega;
-
-            // Try the original angles
-            fitness = fitness_function(phi, chi, omega);
-            fitnesses.append(fitness);
-            phi_list.append(phi);
-            chi_list.append(chi);
-            omega_list.append(omega);
-
-            //Make angles closer to 0
-            if (phi > PI) phi -= 2*PI;
-            if (chi > PI) chi -= 2*PI;
-            if (omega > PI) omega -= 2*PI;
-            if (phi < -PI) phi += 2*PI;
-            if (chi < -PI) chi += 2*PI;
-            if (omega < -PI) omega += 2*PI;
-            fitness = fitness_function(phi, chi, omega);
-            fitnesses.append(fitness);
-            phi_list.append(phi);
-            chi_list.append(chi);
-            omega_list.append(omega);
-
-            //(phi-pi, -chi, omega-pi) is always equivalent
-            phi = old_phi-PI;
-            chi = -old_chi;
-            omega = old_omega-PI;
-            if (phi > PI) phi -= 2*PI;
-            if (chi > PI) chi -= 2*PI;
-            if (omega > PI) omega -= 2*PI;
-            if (phi < -PI) phi += 2*PI;
-            if (chi < -PI) chi += 2*PI;
-            if (omega < -PI) omega += 2*PI;
-            fitness = fitness_function(phi, chi, omega);
-            fitnesses.append(fitness);
-            phi_list.append(phi);
-            chi_list.append(chi);
-            omega_list.append(omega);
-        }
-        """
-        #Workaround for bug in weave, where it ignores any changes in the support code.
-        code += "\n\n // " + self.__class__.__name__ + "\n"
-        code += "/* " + self.get_fitness_function_c_code() + " */"
-
-        ##List of fitnesses
-        fitnesses = []
-        chi_list = []
-        phi_list = []
-        omega_list = []
-
         size = rot_angle_list.size*3
         fitnesses = np.zeros(size)
         chi_list = np.zeros(size)
@@ -891,10 +750,6 @@ class LimitedGoniometer(Goniometer):
         params = self.get_params()
         func_name = self.get_fit_func_name()
 
-        ##Prepare variables, run the C code
-        varlist = ['rot_angle_list', 'ending_vec', 'initial_rotation_matrix', 'fitnesses', 'chi_list', 'phi_list', 'omega_list']
-        # ret = weave.inline(code, varlist, compiler='gcc', support_code=support)
-        print rot_angle_list.shape, ending_vec.shape, initial_rotation_matrix.shape, params.shape
         ct.angle_fitness(rot_angle_list, ending_vec, initial_rotation_matrix, fitnesses, chi_list, phi_list, omega_list, func_name, params)
 
         #Test that the resulting matrix is still OK

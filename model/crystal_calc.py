@@ -9,7 +9,6 @@ Holds various useful functions for crystallography, like lattice calculations, e
 #--- General Imports ---
 import numpy as np
 from numpy import array, sin, cos, pi, sign
-import weave
 import crystal_plan_c_ext as ct
 
 #--- Model Imports ---
@@ -495,15 +494,10 @@ def getq(az, elevation, wl_output, q_rot_matrix, wl_input=None):
     if wl_input is None:
         # -- elastic ---
         wl_input = wl_output
-        # q = weave.inline(getq_code, ['wl_input', 'wl_output', 'elevation', 'az', 'pi', 'rot_matrix'],compiler='gcc', support_code = support,libraries = ['m'])
-        # q = column([q[0],q[1],q[2]])
         q = ct.getq(wl_output, elevation, az, np.pi, rot_matrix)
         return q
     else:
         #--- inelastic ---
-        # (q_both) =  weave.inline(getq_inelastic_code, ['wl_input', 'wl_output', 'elevation', 'az', 'pi', 'rot_matrix'],compiler='gcc', support_code = support,libraries = ['m'])
-        # q = np.array(q_both[0:3]).reshape(3,1)
-        # q_unrot = np.array(q_both[3:]).reshape(3,1)
         q, q_unrot = ct.getq_inelastic(wl_input, wl_output, elevation, az, np.pi, rot_matrix)
         return (q, q_unrot)
 

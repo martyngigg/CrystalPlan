@@ -19,7 +19,6 @@ import numpy as np
 from numpy import array, sin, cos, pi
 #import scipy.optimize
 import scipy
-import weave
 import time
 import csv
 
@@ -627,137 +626,6 @@ class Instrument:
 
 
     #========================================================================================================
-    # C-code for calculate_coverage
-    _code_vector_length = """
-        double vector_length(py::tuple vector)
-        {
-            double length = 0;
-            for (int i=0; i < vector.length(); i++)
-                length += double(vector[i])*double(vector[i]);
-            return sqrt(length);
-        }
-        """
-
-    _code_shrink_q_vector = """void shrink_q_vector(py::tuple &q, double limit)
-            {
-                double length = vector_length(q);
-                if (length <= 0)
-                    return;
-
-                //py::tuple q_out(q.length());
-
-                for (int i=0; i < q.length(); i++)
-                    {
-                    if (length > limit)
-                        { q[i] = double(q[i]) * (limit / length);
-                        }
-                    else
-                        { q[i] = double(q[i]);
-                        }
-                    }
-                //return q_out;
-            }
-            """
-
-    _code_calculate_coverage = """
-            //Loop through pixels using the list given before.
-            for (int iix = 0; iix < xlist.length(); iix++)
-            {
-                int ix = xlist[iix];
-                for (int iiy = 0; iiy < ylist.length(); iiy++)
-                {
-                    int iy = ylist[iiy];
-
-                    //Angles of the detector pixel positions
-                    double az, elev;
-                    az = AZIMUTHAL_ANGLE2(iy, ix);
-                    elev = ELEVATION_ANGLE2(iy, ix);
-
-                    //Get the two limits.
-                    py::tuple q_min = getq(wl_min, az, elev, pi, rot_matrix);
-                    py::tuple q_max = getq(wl_max, az, elev, pi, rot_matrix);
-                    //Limit them to the modeled size
-                    shrink_q_vector(q_min, qlim);
-                    shrink_q_vector(q_max, qlim);
-
-                    //Find out how long of a line that is
-                    double q_length = (vector_length(q_max) - vector_length(q_min));
-                    if (q_length<0) q_length = -q_length;
-
-                    //How many steps will we take. The multiplication factor here is a fudge to make sure it covers fully.
-                    int numfrac = (1.25 * q_length) / (q_resolution);
-
-                    // if (numfrac == 0) printf("numfrac is %d, q_length %f, qmin and max are %f and %f, abs is %f \\n", numfrac, q_length, vector_length(q_min), vector_length(q_max),   (vector_length(q_max) - vector_length(q_min))  );
-
-                    if (numfrac > 0)
-                    {
-                        //There is something to measure.
-
-                        //Size in q-space of each step
-                        double dx, dy, dz;
-                        dx = (double(q_max[0]) - double(q_min[0])) / numfrac;
-                        dy = (double(q_max[1]) - double(q_min[1])) / numfrac;
-                        dz = (double(q_max[2]) - double(q_min[2])) / numfrac;
-
-                        /*
-                        printf("%f, %f\\n",vector_length(q_min),vector_length(q_max));
-                        printf("%d\\n", numfrac);
-                        printf("%f, %f, %f\\n", dx, dy, dz);
-                        */
-
-                        long index;
-                        double qx, qy, qz;
-                        long iqx, iqy, iqz;
-                        // unsigned int* coverage_int = (unsigned int*) coverage;
-
-                        double lim_min = -qlim;
-                        double lim_max = +qlim;
-
-                        double q_min_x = double(q_min[0]);
-                        double q_min_y = double(q_min[1]);
-                        double q_min_z = double(q_min[2]);
-                        //printf("Setvalue1 is %d\\n", set_value1);
-
-                        //Okay now we draw the line from q_min to q_max.
-                        long i;
-                        for (i=0; i<numfrac; i++)
-                        {
-                            //All of these qx checks might not be necessary anymore...?
-                            qx = q_min_x + i*dx;
-                            iqx = round((qx - lim_min) / q_resolution);
-                            if ((iqx >=0) && (iqx < stride))
-                            {
-                                qy = q_min_y + i * dy;
-                                iqy = round((qy - lim_min) / q_resolution);
-                                if ((iqy >=0) && (iqy < stride))
-                                {
-                                    qz = q_min_z + i * dz;
-                                    iqz = round((qz - lim_min) / q_resolution);
-                                    if ((iqz >=0) && (iqz < stride))
-                                    {
-                                        if (number_of_ints==2)
-                                        {
-                                            COVERAGE4(iqx,iqy,iqz,0) |= set_value1;
-                                            COVERAGE4(iqx,iqy,iqz,1) |= set_value2;
-                                        }
-                                        else
-                                        {
-                                            COVERAGE4(iqx,iqy,iqz,0) |= set_value1;
-                                        }
-
-                                    }
-                                }
-                            }
-                        } //for i in numfrac
-                    } //numfrac > 0 so we can draw the line
-
-                } //for iiy
-
-            }
-            """
-
-
-    #========================================================================================================
     def get_coverage_number_of_ints(self):
         """Return the number of 32-bit ints needed to have the detector mask."""
         if len(self.detectors)>=32:
@@ -889,27 +757,11 @@ class Instrument:
                 #Get some variables ready
                 azimuthal_angle = det.azimuthal_angle
                 elevation_angle = det.elevation_angle
-                #Set up several functions used in the code
-                support = "#include <math.h>\n"
-                support += crystal_calc.getq_code_header + crystal_calc.getq_code + crystal_calc.getq_code_footer
-                support += self._code_vector_length
-                support += self._code_shrink_q_vector
                 #Dimensions of the array
                 s = coverage.shape
                 stride = s[0]
                 max_index = s[0]*s[1]*s[2] #largest index into the array +1
-                #Make the list of local vars to use.
-                varlist = ['xlist', 'ylist', 'azimuthal_angle', 'elevation_angle']
-                varlist += ['pi', 'rot_matrix']
-                varlist += ['set_value1', 'set_value2', 'number_of_ints']
-                varlist += ['coverage', 'stride', 'max_index']
-                varlist += ['wl_min', 'wl_max']
-                #Dump these  in the locals namespace
-                attribute_list = ['qlim', 'q_resolution']
-                for var in attribute_list: locals()[var] = getattr(self, var)
-                varlist += attribute_list
-                # Run the C code (see between function declarations for the actual code).
-                # weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
+
                 xlist = np.array(xlist)
                 ylist = np.array(ylist)
 
@@ -1103,73 +955,13 @@ class Instrument:
 
         number_of_ints = self.get_coverage_number_of_ints()
 
-        #Now we add up the coverages together
-        if config.cfg.force_pure_python or not use_inline_c or True:
-            #--- Pure Python Version ---
-            for one_coverage in coverage_list:
-                #By applying the mask and the >0 we take away any unwanted detectors.
-                if number_of_ints==1:
-                    #coverage = coverage + ((one_coverage & mask) != 0)
-                    coverage += ((one_coverage[:,:,:,0] & mask1) != 0)
-                else:
-                    coverage += (((one_coverage[:,:,:,0] & mask1) | (one_coverage[:,:,:,1] & mask2)) != 0)
-
-        else:
-            #--- Inline C version ---
-            #   about 70x faster than the python version.
-            coverage_size = coverage.size
-            num_coverage = len(coverage_list)
-            support = ""
-            code = """
-            int i, j;
-            PyArrayObject* each_coverage[num_coverage];
-            for (j=0; j<num_coverage; j++)
-                each_coverage[j] = (PyArrayObject*) PyList_GetItem(coverage_list, j);
-
-            // npy_uint* one_coverage;
-            npy_uint low, high;
-
-            for (j=0; j<num_coverage; j++)
-            {
-                npy_intp* Sone_coverage = each_coverage[j]->strides;
-
-                for (int ix=0; ix < Ncoverage[0]; ix++)
-                {
-                    for (int iy=0; iy < Ncoverage[1]; iy++)
-                    {
-                        for (int iz=0; iz < Ncoverage[2]; iz++)
-                        {
-                            if (number_of_ints==2)
-                            {
-                                //NOTE: This code assumes LSB-first ints.
-                                low = (*((npy_uint*)(each_coverage[j]->data + (ix)*Sone_coverage[0] + (iy)*Sone_coverage[1] + (iz)*Sone_coverage[2] + 0)));
-                                high = (*((npy_uint*)(each_coverage[j]->data + (ix)*Sone_coverage[0] + (iy)*Sone_coverage[1] + (iz)*Sone_coverage[2] + 1*Sone_coverage[3])));
-                                if ((low & mask1) || (high & mask2))
-                                {
-                                    COVERAGE3(ix,iy,iz)++;
-                                }
-                            }
-                            else
-                            {
-                                //Only 1 int
-                                //Index into the coverage array
-                                low = (*((npy_uint*)(each_coverage[j]->data + (ix)*Sone_coverage[0] + (iy)*Sone_coverage[1] + (iz)*Sone_coverage[2])));
-                                // if (low != 0) { printf("low is %d\\n", low);}
-                                if (low & mask1)
-                                {
-                                    COVERAGE3(ix,iy,iz)++;
-                                }
-                            }
-                        }// for iy
-                    }
-                } //for ix
-
-
-            }
-            """
-            varlist = ['number_of_ints', 'coverage', 'coverage_size', 'mask1', 'mask2', 'num_coverage', 'coverage_list']
-            weave.inline(code, varlist, compiler='gcc', support_code = support)
-
+        for one_coverage in coverage_list:
+            #By applying the mask and the >0 we take away any unwanted detectors.
+            if number_of_ints==1:
+                #coverage = coverage + ((one_coverage & mask) != 0)
+                coverage += ((one_coverage[:,:,:,0] & mask1) != 0)
+            else:
+                coverage += (((one_coverage[:,:,:,0] & mask1) | (one_coverage[:,:,:,1] & mask2)) != 0)
 
         if self.verbose: print "instrument.total_coverage done in %s sec." % (time.time()-t1)
 
@@ -1206,149 +998,6 @@ class InstrumentInelastic(Instrument):
     def __init__ (self, filename=None, params=dict()):
         """Create an inelastic instrument. Will load the geometry from a supplied CSV file."""
         Instrument.__init__(self, filename, params)
-
-
-
-    #========================================================================================================
-    # C-code for calculate_coverage
-
-    _code_calculate_coverage = """
-            double kfz, kf_squared, E;
-
-            double lim_min = -qlim;
-            double lim_max = +qlim;
-
-            //Loop through pixels using the list given before.
-            for (int iix = 0; iix < xlist.length(); iix++)
-            {
-                int ix = xlist[iix];
-                for (int iiy = 0; iiy < ylist.length(); iiy++)
-                {
-                    int iy = ylist[iiy];
-
-                    //Angles of the detector pixel positions
-                    double az, elev;
-                    az = AZIMUTHAL_ANGLE2(iy, ix);
-                    elev = ELEVATION_ANGLE2(iy, ix);
-
-                    //Get the two limits.
-                    py::tuple q_max_both = getq_inelastic(wl_input, wl_min, az, elev, pi, rot_matrix);
-                    py::tuple q_min_both = getq_inelastic(wl_input, wl_max, az, elev, pi, rot_matrix);
-
-                    // Rotated qs
-                    double q_max[3], q_min[3], q_max_unrot[3], q_min_unrot[3];
-                    double q_max_length = 0;
-                    double q_min_length = 0;
-                    for (int i=0; i<3; i++)
-                    {
-                        q_max[i] = q_max_both[i];
-                        q_max_unrot[i] = q_max_both[i+3];
-                        q_max_length += q_max[i]*q_max[i];
-
-                        q_min[i] = q_min_both[i];
-                        q_min_unrot[i] = q_min_both[i+3];
-                        q_min_length += q_min[i]*q_min[i];
-                    }
-                    q_max_length = sqrt(q_max_length);
-                    q_min_length = sqrt(q_min_length);
-
-                    /*
-                        //Limit them to the modeled size -- SHRINK VECTOR ---
-                        double reduceby_max = 1.0;
-                        double reduceby_min = 1.0;
-                        if (q_max_length > qlim)
-                            { reduceby_max = q_max_length/qlim; }
-                        if (q_min_length > qlim)
-                            { reduceby_min = q_min_length/qlim; }
-                        for (int i=0; i<3; i++)
-                        {
-                            q_max[i] /= reduceby_max;
-                            q_min[i] /= reduceby_min;
-                            q_max_unrot[i] /= reduceby_max;
-                            q_min_unrot[i] /= reduceby_min;
-                        }
-                    */
-
-                    //Vector difference max-min
-                    double q_diff[3];
-                    double q_diff_unrot[3];
-                    double q_length = 0.0;
-                    for (int i=0; i<3; i++)
-                    {
-                        // We change the sign, because for inelastic, Q = ki-kf, rather than the opposite sign for elastic
-                        q_diff[i] = q_max[i] - q_min[i];
-                        q_diff_unrot[i] = q_max_unrot[i] - q_min_unrot[i];
-                        q_length += q_diff[i]*q_diff[i];
-                    }
-
-                    //Find out how long of a line that is
-                    q_length = sqrt(q_length);
-
-                    //How many steps will we take. The multiplication factor here is a fudge to make sure it covers fully.
-                    long numfrac = (1.25 * q_length) / (q_resolution);
-
-                    if (numfrac > 0)
-                    {
-                        //There is something to measure.
-
-                        //Size in q-space of each step
-                        double dx, dy, dz;
-                        dx = q_diff[0] / numfrac;
-                        dy = q_diff[1] / numfrac;
-                        dz = q_diff[2] / numfrac;
-
-                        double dx_unrot, dy_unrot, dz_unrot;
-                        dx_unrot = q_diff_unrot[0] / numfrac;
-                        dy_unrot = q_diff_unrot[1] / numfrac;
-                        dz_unrot = q_diff_unrot[2] / numfrac;
-
-                        long index;
-                        double qx, qy, qz;
-                        double qx_unrot, qy_unrot, qz_unrot;
-                        long iqx, iqy, iqz;
-
-                        //Okay now we draw the line from q_min to q_max.
-                        double i;
-                        for (i=0; i<numfrac; i++)
-                        {
-                            //All of these qx checks might not be necessary anymore...?
-                            qx = q_min[0] + i*dx;
-                            qx_unrot = q_min_unrot[0] + i*dx_unrot;
-                            iqx = long(round((qx - lim_min) / q_resolution));
-                            if ((iqx >=0) && (iqx < stride))
-                            {
-                                qy = q_min[1] + i*dy;
-                                qy_unrot = q_min_unrot[1] + i*dy_unrot;
-                                iqy = long(round((qy - lim_min) / q_resolution));
-                                if ((iqy >=0) && (iqy < stride))
-                                {
-                                    qz = q_min[2] + i*dz;
-                                    qz_unrot = q_min_unrot[2] + i*dz_unrot;
-                                    iqz = long(round((qz - lim_min) / q_resolution));
-                                    if ((iqz >=0) && (iqz < stride))
-                                    {
-                                        //Calculate the neutron energy gain
-                                        // But we need to get back the z component of kf
-                                        // We kept Q = kf - ki
-                                        kfz = (ki + qz_unrot);
-
-                                        // Okay, now calculate kf^2
-                                        kf_squared = qx_unrot*qx_unrot + qy_unrot*qy_unrot + kfz*kfz;
-
-                                        // Get the energy. The constant sets the units (to meV)
-                                        E = energy_constant * (kf_squared - ki_squared);
-
-                                        COVERAGE3(iqx,iqy,iqz) = E;
-                                    }
-                                }
-                            }
-
-                        } //for i in numfrac
-                    } //numfrac > 0 so we can draw the line
-
-                } //for iiy
-            }
-            """
 
     #========================================================================================================
     def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
@@ -1487,16 +1136,6 @@ class InstrumentInelastic(Instrument):
                 s = coverage.shape
                 stride = s[0]
                 max_index = s[0]*s[1]*s[2] #largest index into the array +1
-                #Make the list of local vars to use.
-                varlist = ['wl_input', 'xlist', 'ylist', 'azimuthal_angle', 'elevation_angle']
-                varlist += ['pi', 'rot_matrix', 'energy_constant', 'ki_squared', 'ki']
-                varlist += ['coverage', 'stride', 'max_index']
-                #Dump these  in the locals namespace
-                attribute_list = ['wl_min', 'wl_max', 'qlim', 'q_resolution']
-                for var in attribute_list: locals()[var] = getattr(self, var)
-                varlist += attribute_list
-                #Run the C code (see between function declarations for the actual code).
-                # weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
                 ct.calculate_coverage_inelastic(wl_input, xlist, ylist, azimuthal_angle,
                                                 elevation_angle, np.pi,
                                                 rot_matrix, set_value1,
@@ -1603,53 +1242,9 @@ class InstrumentInelastic(Instrument):
             coverage_list.append(pos_cov.coverage)
 
         #Now we add up the coverages together
-        if config.cfg.force_pure_python or not use_inline_c or True:
-            #--- Pure Python Version ---
-            for one_coverage in coverage_list:
-                #Add one to the voxels where the energy is within the given range.
-                coverage += (one_coverage[:,:,:] >= slice_min) & (one_coverage[:,:,:] <= slice_max)
-
-        else:
-            #--- Inline C version ---
-            #   about 70x faster than the python version.
-            coverage_size = coverage.size
-            num_coverage = len(coverage_list)
-            support = ""
-            code = """
-            int i, j;
-            PyArrayObject* each_coverage[num_coverage];
-            for (j=0; j<num_coverage; j++)
-                each_coverage[j] = (PyArrayObject*) PyList_GetItem(coverage_list, j);
-
-            float low, high;
-
-            for (j=0; j<num_coverage; j++)
-            {
-                npy_intp* Sone_coverage = each_coverage[j]->strides;
-
-                for (int ix=0; ix < Ncoverage[0]; ix++)
-                {
-                    for (int iy=0; iy < Ncoverage[1]; iy++)
-                    {
-                        for (int iz=0; iz < Ncoverage[2]; iz++)
-                        {
-                            //Only 1 int
-                            //Index into the coverage array
-                            low = (*((float*)(each_coverage[j]->data + (ix)*Sone_coverage[0] + (iy)*Sone_coverage[1] + (iz)*Sone_coverage[2])));
-                            if (low < 1e6)
-                            {
-                                COVERAGE3(ix,iy,iz)++;
-                                //COVERAGE3(ix,iy,iz) = low;
-                            }
-                        }// for iy
-                    }
-                } //for ix
-
-
-            }
-            """
-            varlist = ['number_of_ints', 'coverage', 'coverage_size', 'num_coverage', 'coverage_list']
-            weave.inline(code, varlist, compiler='gcc', support_code = support)
+        for one_coverage in coverage_list:
+            #Add one to the voxels where the energy is within the given range.
+            coverage += (one_coverage[:,:,:] >= slice_min) & (one_coverage[:,:,:] <= slice_max)
 
 
         if self.verbose: print "instrument.total_coverage done in %s sec." % (time.time()-t1)
