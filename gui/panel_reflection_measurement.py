@@ -231,20 +231,12 @@ class PanelReflectionMeasurement(wx.Panel):
             self.staticTextY.SetLabel((fmt % meas.vertical) + " mm")
             self.staticTextMeasurementNumber.SetLabel("#%d:" % meas.measurement_num)
 
-            #Remove these windows, if they are in there
-            try:
-                self.flexGridSizer1.RemoveWindow(self.staticTextIntegrated)
-                self.flexGridSizer1.RemoveWindow(self.buttonPlace)
-            except:
-                pass
-
             if hasattr(meas, "integrated"):
                 #Real measurement
                 self.staticTextWidthLabel.SetLabel(" SigI:")
                 self.staticTextWidth.SetLabel((self.fmt_counts % meas.sigI))
                 self.staticTextWidth.SetToolTipString(u'Sigma I of the integrated peak intensity')
                 self.staticTextIntegrated.SetLabel((self.fmt_counts % meas.integrated))
-                self.flexGridSizer1.InsertWindow(9, self.staticTextIntegrated, 0, border=0, flag=wx.SHRINK)
                 self.staticTextIntegratedLabel.Show()
                 self.staticTextIntegrated.Show()
                 self.buttonPlace.Hide()
@@ -253,7 +245,6 @@ class PanelReflectionMeasurement(wx.Panel):
                 self.staticTextWidthLabel.SetLabel("Width:")
                 self.staticTextWidth.SetLabel((fmt % meas.peak_width) + " mm")
                 self.staticTextWidth.SetToolTipString(u'Half-width of the peak on the detector.')
-                self.flexGridSizer1.InsertWindow(9, self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.RIGHT)
                 # Don't show the place button for 4-circle
                 self.buttonPlace.Show( not gui_utils.fourcircle_mode() )
                 self.staticTextIntegratedLabel.Hide()
