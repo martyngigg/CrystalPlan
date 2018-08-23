@@ -593,53 +593,6 @@ class LimitedGoniometer(Goniometer):
     def get_fit_func_name(self):
         return "general"
 
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,chi, omega.
-        # OVERWRITE THIS FOR SUBCLASSES!
-        #   Don't change the # of parameters - the search code always gives you phi, chi, omega.
-        # This sample fitness value makes phi less important (since it normally has full freedom)
-
-        args = []
-        for i in xrange(3):
-            for j in xrange(2):
-                args.append(self.gonio_angles[i].random_range[j])
-        args = tuple(args)
-
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT phi_min = %f;
-            FLOAT phi_max = %f;
-            FLOAT chi_min = %f;
-            FLOAT chi_max = %f;
-            FLOAT omega_min = %f;
-            FLOAT omega_max = %f;
-
-            FLOAT phi_mid = (phi_min + phi_max) / 2;
-            FLOAT chi_mid = (chi_min + chi_max) / 2;
-            FLOAT omega_mid = (omega_min + omega_max) / 2;
-
-            FLOAT fitness =  absolute(chi - chi_mid) + absolute(omega - omega_mid) + absolute(phi - phi_mid);
-
-            // Big penalties for being out of the range
-            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
-            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
-            if (chi < chi_min) fitness += (chi_min - chi) * 1.0;
-            if (chi > chi_max) fitness += (chi - chi_max) * 1.0;
-            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
-            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
-
-            // if (phi < phi_min || phi > phi_max) fitness += 10;
-            // if (chi < chi_min || chi > chi_max) fitness += 10;
-            // if (omega < omega_min || omega > omega_max) fitness += 10;
-
-            return fitness;
-        }
-        """ % (args)
-        return s
-
-
 
     #-------------------------------------------------------------------------
     def _angle_fitness_python(self, rot_angle, initial_rotation_matrix, ending_vec, starting_vec):
@@ -956,39 +909,6 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
     def get_fit_func_name(self):
         return "snap"
 
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,chi, omega.
-        args = []
-        for i in xrange(1):
-            # Each angle
-            for j in xrange(2):
-                args.append(self.gonio_angles[i].random_range[j])
-        # Last argument is the fixed chi value.
-        args.append( np.deg2rad(self.chi) )
-        args = tuple(args)
-
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT phi_min = %f;
-            FLOAT phi_max = %f;
-
-            FLOAT chi_mid = %f;
-            FLOAT phi_mid = (phi_min + phi_max) / 2;
-
-            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(phi - phi_mid)/10.0;
-
-            // Big penalties for being out of the range
-            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
-            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
-
-            return fitness;
-        }
-        """ % (args)
-        return s
-
-
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
@@ -1110,19 +1030,6 @@ class MandiGoniometer(LimitedGoniometer):
 
     def get_fit_func_name(self):
         return "mandi"
-
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        """C code for the fitness of phi,chi, omega.
-        Fitness is always good since the goniometer has no limits"""
-        s = """FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT fitness = absolute(phi);
-            return fitness;
-        }
-        """
-        return s
-
 
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
@@ -1248,43 +1155,6 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
     def get_fit_func_name(self):
         return "mandi_vary_omega"
 
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,chi, omega.
-        args = []
-        for i in xrange(2):
-            for j in xrange(2):
-                args.append(self.gonio_angles[i].random_range[j])
-        # Last argument is the fixed chi value.
-        args.append( np.deg2rad(self.chi) )
-        args = tuple(args)
-
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT phi_min = %f;
-            FLOAT phi_max = %f;
-            FLOAT omega_min = %f;
-            FLOAT omega_max = %f;
-
-            FLOAT phi_mid = (phi_min + phi_max) / 2;
-            FLOAT chi_mid = %f;
-            FLOAT omega_mid = (omega_min + omega_max) / 2;
-
-            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(omega - omega_mid)/10.0 + absolute(phi - phi_mid)/10.0;
-
-            // Big penalties for being out of the range
-            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
-            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
-            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
-            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
-
-            return fitness;
-        }
-        """ % (args)
-        return s
-
-
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
@@ -1402,19 +1272,6 @@ class ImagineGoniometer(LimitedGoniometer):
 
     def get_fit_func_name(self):
         return "mandi"
-
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        """C code for the fitness of phi,chi, omega.
-        Fitness is always good since the goniometer has no limits"""
-        s = """FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT fitness = absolute(phi);
-            return fitness;
-        }
-        """
-        return s
-
 
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
@@ -1535,41 +1392,6 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
 
     def get_fit_func_name(self):
         return "mandi_vary_omega"
-
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,kappa, omega.
-        args = []
-        for i in xrange(2):
-            for j in xrange(2):
-                args.append(self.gonio_angles[i].random_range[j])
-        args = tuple(args)
-
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT phi_min = %f;
-            FLOAT phi_max = %f;
-            FLOAT omega_min = %f;
-            FLOAT omega_max = %f;
-
-            FLOAT phi_mid = (phi_min + phi_max) / 2;
-            FLOAT chi_mid = %f;
-            FLOAT omega_mid = (omega_min + omega_max) / 2;
-
-            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(omega - omega_mid)/10.0 + absolute(phi - phi_mid)/10.0;
-
-            // Big penalties for being out of the range
-            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
-            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
-            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
-            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
-
-            return fitness;
-        }
-        """ % (args)
-        return s
-
 
     #-------------------------------------------------------------------------------
     def get_phi_kappa_omega(self, angles):
@@ -1693,43 +1515,6 @@ class TopazAmbientGoniometer(LimitedGoniometer):
 
     def get_fit_func_name(self):
         return "mandi_vary_omega"
-
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,chi, omega.
-        args = []
-        for i in xrange(2):
-            for j in xrange(2):
-                args.append(self.gonio_angles[i].random_range[j])
-        # Last argument is the fixed chi value.
-        args.append( np.deg2rad(self.chi) )
-        args = tuple(args)
-
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT phi_min = %f;
-            FLOAT phi_max = %f;
-            FLOAT omega_min = %f;
-            FLOAT omega_max = %f;
-
-            FLOAT phi_mid = (phi_min + phi_max) / 2;
-            FLOAT chi_mid = %f;
-            FLOAT omega_mid = (omega_min + omega_max) / 2;
-
-            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(omega - omega_mid)/10.0 + absolute(phi - phi_mid)/10.0;
-
-            // Big penalties for being out of the range
-            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
-            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
-            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
-            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
-
-            return fitness;
-        }
-        """ % (args)
-        return s
-
 
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
@@ -2584,27 +2369,6 @@ class HB3AGoniometer(LimitedGoniometer):
         return "HB3A"
 
     #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        # C code for the fitness of phi,chi, omega.
-        # We want omega to be close to its middle range of 25 degrees.
-        # Phi is free
-        return """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            double center = 3.14159*25.0/180.0;
-            double omegadiff = omega - center;
-            if (omegadiff < 0) omegadiff = -omegadiff;
-
-            //if (omegadiff > center)
-            // omegadiff = omegadiff + (omega-center) * 10.0;
-
-            return absolute(chi) + omegadiff + absolute(phi)/1000.0;
-            //return absolute(chi) + omegadiff + absolute(phi);
-        }
-        """
-
-
-    #-------------------------------------------------------------------------
     def calculate_angles_to_rotate_vector(self, *args, **kwargs):
         """Calculate a set of sample orientation angles that rotate a single vector.
         TRY to return a sample orientation that is achievable by the goniometer.
@@ -2675,43 +2439,6 @@ class CorelliGoniometer(LimitedGoniometer):
 
     def get_fit_func_name(self):
         return "mandi_vary_omega"
-
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,chi, omega.
-        args = []
-        for i in xrange(2):
-            for j in xrange(2):
-                args.append(self.gonio_angles[i].random_range[j])
-        # Last argument is the fixed chi value.
-        args.append( np.deg2rad(self.omega) )
-        args = tuple(args)
-
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            FLOAT phi_min = %f;
-            FLOAT phi_max = %f;
-            FLOAT omega_min = %f;
-            FLOAT omega_max = %f;
-
-            FLOAT phi_mid = (phi_min + phi_max) / 2;
-            FLOAT chi_mid = %f;
-            FLOAT omega_mid = (omega_min + omega_max) / 2;
-
-            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(omega - omega_mid)/10.0 + absolute(phi - phi_mid)/10.0;
-
-            // Big penalties for being out of the range
-            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
-            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
-            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
-            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
-
-            return fitness;
-        }
-        """ % (args)
-        return s
-
 
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
