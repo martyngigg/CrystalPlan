@@ -113,16 +113,16 @@ class ExperimentGridController():
 
         #Adjust number of rows
         num_rows = len(model.instrument.inst.positions)
-        if grid.GetNumberRows() > num_rows:
-            grid.DeleteRows(0, grid.GetNumberRows()-num_rows)
-        else:
-            old_num_rows = grid.GetNumberRows()
-            grid.AppendRows(num_rows-grid.GetNumberRows())
-            #Set the editors for the new rows
-            choices = model.experiment.get_stopping_criteria_names()
-            for row in xrange(old_num_rows, num_rows):
-                grid.SetCellEditor(row, self.criterion_col, wx.grid.GridCellChoiceEditor(choices))
-
+        old_num_rows = grid.GetNumberRows()
+        if num_rows != old_num_rows:
+            if num_rows < old_num_rows:
+                grid.DeleteRows(0, old_num_rows-num_rows)
+            elif num_rows > old_num_rows:
+                grid.AppendRows(num_rows - old_num_rows)
+                #Set the editors for the new rows
+                choices = model.experiment.get_stopping_criteria_names()
+                for row in xrange(old_num_rows, num_rows):
+                    grid.SetCellEditor(row, self.criterion_col, wx.grid.GridCellChoiceEditor(choices))
 
         #Font for angles
         angle_font = wx.Font(10, 76, wx.NORMAL, wx.NORMAL, False, u'Monospace')

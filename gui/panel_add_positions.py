@@ -85,9 +85,6 @@ class CalculationThread(Thread):
                     model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, iteration=i)
                     t_last = time.time()
 
-                #Update position list in GUI, but less often
-                model.messages.send_message_optional(self, model.messages.MSG_POSITION_LIST_CHANGED, delay=1.5)
-
                 #This performs the calculation
                 newpos = model.instrument.inst.simulate_position(angles,
                     model.experiment.exp.crystal.get_u_matrix(),
