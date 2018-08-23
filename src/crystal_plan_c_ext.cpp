@@ -424,6 +424,12 @@ float fitness_function_MANDI(float phi, float chi, float omega, const VectorD& p
     return fitness;
 }
 
+float fitness_function_SXD(float phi, float chi, float omega, const VectorD& params)
+{
+    float fitness = absolute(phi);
+    return fitness;
+}
+
 float fitness_function_SNAP(float phi, float chi, float omega, const VectorD& params)
 {
     float phi_min = params(0);
@@ -482,6 +488,8 @@ float fitness_function(float phi, float chi, float omega, const std::string& fun
         return fitness_function_generic(phi, chi, omega, params);
     } else if (func_name == "mandi") {
         return fitness_function_MANDI(phi, chi, omega, params);
+    } else if (func_name == "sxd") {
+        return fitness_function_SXD(phi, chi, omega, params);
     } else if (func_name == "mandi_vary_omega") {
         return fitness_function_MANDIVaryOmega(phi, chi, omega, params);
     } else if (func_name == "snap") {
