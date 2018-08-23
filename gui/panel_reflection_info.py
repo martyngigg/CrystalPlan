@@ -77,7 +77,7 @@ class PanelReflectionInfo(wx.Panel):
 
         self.boxSizerScrollWindowReal = wx.BoxSizer(orient=wx.VERTICAL)
 
-        self.flexGridSizerTop = wx.FlexGridSizer(cols=2, hgap=2, rows=3, vgap=3)
+        self.flexGridSizerTop = wx.FlexGridSizer(hgap=2, vgap=3)
         self.flexGridSizerTop.SetMinSize(wx.Size(100, 87))
 
         self.gridSizerHKL = wx.GridSizer(cols=3, hgap=2, rows=1, vgap=0)
