@@ -499,7 +499,7 @@ def eval_func_volume(genome, verbose=False):
     instr.positions = []
     pd = {}
     for poscov in all_positions: #@type poscov PositionCoverage
-        new_poscov = instr.simulate_position(poscov.angles, poscov.sample_U_matrix, use_multiprocessing=False)
+        new_poscov = instr.simulate_position(poscov.angles, poscov.sample_U_matrix, use_multiprocessing=False, silence_messages=True)
         pd[id(new_poscov)] = True
 
     #@type exp Experiment

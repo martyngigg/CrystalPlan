@@ -644,7 +644,7 @@ class Instrument:
 
 
     #========================================================================================================
-    def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
+    def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True, silence_messages=False):
         """This method finds the coverage of all detectors in a full 3D matrix by drawing
         straight lines from the min. wavelength to the max. wavelength. This is, so far, the most
         efficient way I have found to calculate it.
@@ -699,7 +699,8 @@ class Instrument:
                 continue
 
             #Output and statusbar messages, if it's been long enough
-            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
+            if not silence_messages:
+                messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
                 if self.verbose: sys.stdout.write(det.name + ", ")
@@ -861,7 +862,7 @@ class Instrument:
         return None
 
     #========================================================================================================
-    def simulate_position(self, angles, sample_U_matrix=np.identity(3), use_multiprocessing=False):
+    def simulate_position(self, angles, sample_U_matrix=np.identity(3), use_multiprocessing=False, silence_messages=False):
         """Function to simulate coverage for a given sample orientation, and save the results in the
         list of positions in the instrument.
 
@@ -879,10 +880,11 @@ class Instrument:
         if use_multiprocessing: ump = " using multiprocessing"
 
         #Send messages, but not too frequently.
-        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating %s%s..." % (angles_string,ump))
+        if not silence_messages:
+            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating %s%s..." % (angles_string,ump))
 
         t1 = time.time()
-        coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix)
+        coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix, silence_messages=silence_messages)
         if self.verbose:
             print "instrument.simulate_position done in %s sec." % (time.time()-t1)
 
@@ -892,7 +894,8 @@ class Instrument:
         #Add it to the list.
         self.positions.append(pos)
         #Statusbar update
-        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculation of %s complete." % angles_string)
+        if not silence_messages:
+            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculation of %s complete." % angles_string)
 
         return pos
 
@@ -1000,7 +1003,7 @@ class InstrumentInelastic(Instrument):
         Instrument.__init__(self, filename, params)
 
     #========================================================================================================
-    def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
+    def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True, silence_messages=False):
         """This method finds the coverage of all detectors in a full 3D matrix by drawing
         straight lines from the min. wavelength to the max. wavelength. This is, so far, the most
         efficient way I have found to calculate it.
@@ -1088,7 +1091,9 @@ class InstrumentInelastic(Instrument):
                 continue
 
             #Output and statusbar messages, if it's been long enough
-            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
+            if not silence_messages:
+                messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, message="Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
+
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
                 if self.verbose: sys.stdout.write(det.name + ", ")

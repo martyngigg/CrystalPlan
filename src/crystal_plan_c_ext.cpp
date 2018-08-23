@@ -32,8 +32,8 @@ float absolute(float x)
 }
 
 int get_detector_coordinates(VectorD& base_point, VectorD& horizontal, VectorD& vertical, VectorD& normal, 
-        VectorD& h_out, VectorD& v_out, VectorD& wl_out, VectorD& distance_out, VectorD& hits_it, 
-        VectorD& beam, int array_size, float n_dot_base, int height, int width, float wl_min, float wl_max) {
+        VectorD& h_out, VectorD& v_out, VectorD& wl_out, VectorD& distance_out, xt::pytensor<bool, 1>& hits_it, 
+        const MatrixD& beam, int array_size, float n_dot_base, int height, int width, float wl_min, float wl_max) {
 
         float az, elev;
         float bx,by,bz;
@@ -67,9 +67,9 @@ int get_detector_coordinates(VectorD& base_point, VectorD& horizontal, VectorD& 
             bad_beam = 0;
 
             // Non-normalized beam direction
-            bx=beam(0);
-            by=beam(1);
-            bz=beam(2);
+            bx=beam(0, i);
+            by=beam(1, i);
+            bz=beam(2, i);
 
             // So we normalize it
             beam_length = sqrt(bx*bx + by*by + bz*bz);

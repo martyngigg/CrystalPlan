@@ -258,14 +258,14 @@ class FlatDetector(Detector):
         v_out = np.zeros( array_size )
         wl_out = np.zeros( array_size )
         distance_out = np.zeros( array_size )
-        hits_it = np.zeros( array_size, dtype=float)
+        hits_it = np.zeros( array_size, dtype=np.bool)
         height = self.height
         width = self.width
 
         ##Run the code
         error_cout = ct.get_detector_coordinates(self.base_point.flatten(), self.horizontal.flatten(),
                                     self.vertical.flatten(), self.normal.flatten(), h_out, v_out,
-                                    wl_out, distance_out, hits_it, beam.flatten(),
+                                    wl_out, distance_out, hits_it, beam,
                                     int(array_size), n_dot_base, int(height), int(width),
                                     wl_min, wl_max)
 
