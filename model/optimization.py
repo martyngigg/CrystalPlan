@@ -32,6 +32,7 @@ from traits.api import HasTraits,Int,Float,Str,Property,Bool, List
 from traitsui.api import View,Item,Label,Heading, Spring, Handler, Group
 from traitsui.menu import OKButton, CancelButton
 from model.instrument import PositionCoverage
+from model import messages
 
 
 # ===========================================================================================
@@ -103,7 +104,7 @@ class OptimizationParameters(HasTraits):
 class GeneAngles(object):
     """Chromosome objects encodes the data about a single individual in the GA optimization
     algorithm"""
-    
+
     #---------------------------------------------------------------
     def __init__(self, copied_object=None):
         #This will initialize the angles at random
@@ -184,7 +185,7 @@ class ChromosomeAngles(G1DList.G1DList):
         for att in attributes:
             if hasattr(self, att):
                 setattr(g, att, getattr(self, att))
-            
+
         #Do a copy of each "GeneAngles" object
         g.genomeList = [GeneAngles(x) for x in self.genomeList]
 
@@ -366,10 +367,10 @@ def get_angles(genome):
     #@type instr Instrument
     instr = instrument.inst
     exp = experiment.exp
-    
+
     num_positions = len(genome)
     umatrix = exp.crystal.get_u_matrix()
-    
+
     #Create a new of positions
     positions = []
 
@@ -392,7 +393,7 @@ def eval_func(genome, verbose=False):
     positions = get_angles(genome)
     # Copy
     all_positions = list(positions)
-    
+
     if op.fixed_orientations:
         # Append the fixed positions?
         all_positions += op.fixed_orientations_list
@@ -490,7 +491,7 @@ def eval_func_volume(genome, verbose=False):
     positions = get_angles(genome)
     # Copy
     all_positions = list(positions)
-    
+
     if op.fixed_orientations:
         # Append the fixed positions?
         all_positions += op.fixed_orientations_list
@@ -553,13 +554,13 @@ def termination_func(ga_engine):
     best_score = ga_engine.bestIndividual().score
     #When you reach the desired coverage (in %) you are done.
     return best_score * 100.0 >= op.desired_coverage
-    
+
 
 
 #-----------------------------------------------------------------------------------------------
 def set_changeable_parameters(optim_params, ga):
     """Set in the GA engine the parameters that can change generation from generation.
-    
+
     Parameters:
         op: OptimizationParameters instance.
         ga: GA engine instance."""
@@ -603,13 +604,13 @@ def run_optimization(optim_params, step_callback=None):
         # Copy the list
         op.fixed_orientations_list = list(instr.positions)
 
-    # In general, we want to init 
+    # In general, we want to init
     skip_initializer = False
 
     #Make the initializator
     genome.initializator.set(ChromosomeInitializatorRandom)
 
-    # But we may use a different way?    
+    # But we may use a different way?
     if op.use_old_population:
         if op.population == len(op.old_population) and (op.old_population[0].listSize != op.number_of_orientations):
             skip_initializer = True;
@@ -651,18 +652,22 @@ def run_optimization(optim_params, step_callback=None):
     if op.use_old_population and skip_initializer:
         ga.internalPop = op.old_population
         # Clear the process pool to re-initialize it when running in multiple processes
-        ga.internalPop.proc_pool = None 
-        
+        ga.internalPop.proc_pool = None
+
     #Changeable settings. Also copies the individuals to the copies for multiprocessing
     set_changeable_parameters(op, ga)
 
+    def do_callback(ga):
+        messages.send_message(messages.MSG_OPTIMIZER_STEP, ga=ga)
+        global op
+        return op._want_abort
+
     #This is the function that can abort the progress.
-    if not step_callback is None:
-        ga.stepCallback.set(step_callback)
-        
+    ga.stepCallback.set(do_callback)
+
     #And this is the termination function
     ga.terminationCriteria.set(termination_func)
-        
+
     freq_stats = 0
     if __name__ == "__main__": freq_stats = 1
     (best, aborted, converged) = ga.evolve(freq_stats=freq_stats, skip_initialize=skip_initializer)
@@ -685,20 +690,20 @@ if __name__ == "__main__":
     #Inits
     instrument.inst = instrument.Instrument("../instruments/TOPAZ_geom_all_2011.csv")
     instrument.inst.set_goniometer(goniometer.TopazInHouseGoniometer())
-    
+
     # Create a default position of 0,0,0
     instrument.inst.positions = [PositionCoverage([0.0, 0.0, 0.0], None, np.identity(3)), PositionCoverage([1.0, 0.0, 0.0], None, np.identity(3))]
-                                                  
+
     experiment.exp = experiment.Experiment(instrument.inst)
     exp = experiment.exp
     exp.initialize_reflections()
     exp.verbose = False
-    
-    
+
+
     # Go through a bunch of cases
     for use_multiprocessing in [True, False]:
         for fixed_orientations in [True, False]:
-            for use_volume in [False]: 
+            for use_volume in [False]:
 
                 #Run
                 op=OptimizationParameters()
@@ -712,13 +717,13 @@ if __name__ == "__main__":
                 op.population = 10
                 op.use_multiprocessing = use_multiprocessing
                 op.use_volume = use_volume
-                
+
                 op.fixed_orientations = fixed_orientations
                 op.use_old_population = False
-            
+
                 (ga, a1, a2) = run_optimization( op, print_pop)
-                
-                
+
+
                 if True:
                     #Keep going!
                     op.use_old_population = True
@@ -726,23 +731,23 @@ if __name__ == "__main__":
                     op.population = 10
                     op.number_of_orientations = 4
                     (ga, a1, a2) = run_optimization( op, print_pop)
-                    
+
                     #Keep going, changing pop size
                     op.use_old_population = True
                     op.add_trait("old_population", ga.getPopulation())
                     op.population = 12
                     op.number_of_orientations = 4
                     (ga, a1, a2) = run_optimization( op, print_pop)
-                    
+
                     # Change the number of orientations?
                     op.use_old_population = True
                     op.add_trait("old_population", ga.getPopulation())
                     op.population = 12
                     op.number_of_orientations = 6
                     (ga, a1, a2) = run_optimization( op, print_pop)
-    
-   
+
+
                 print "----------best-----------", ga.bestIndividual()
                 print "best coverage = ", ga.bestIndividual().coverage
 
-    
+

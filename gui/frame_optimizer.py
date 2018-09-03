@@ -21,6 +21,7 @@ import gui_utils
 
 #--- Model Imports ----
 import model
+from model import messages
 from model.optimization import OptimizationParameters
 import CrystalPlan_version
 
@@ -152,25 +153,23 @@ class GAData():
 #================================================================================================
 class OptimizationThread(threading.Thread):
     """Thread to run the GA optimization."""
-    def __init__ (self, controller):
+    def __init__ (self, params):
         threading.Thread.__init__(self)
-        self.controller = controller
+        self.params = params
         self.start() #Start on creation
 
     def run(self):
         #Just run the optimization
-        self.controller.params.optimization_running = True
+        self.params.optimization_running = True
         try:
-            (ga, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
-            self.controller.params.optimization_running = False
+            (ga, aborted, converged) = model.optimization.run_optimization(self.params)
             #Call the completion function.
-            self.controller.complete( ga, aborted, converged )
+            messages.send_message(messages.MSG_OPTIMIZER_COMPLETE, ga=ga, aborted=aborted, converged=converged)
         except Exception as inst:
-            print "Error while running optimization"
-            print inst
-            self.controller.restore_buttons()
+            print "Error while running optimization: ", inst.message
         finally:
-            self.controller.params.optimization_running = False
+            self.params.optimization_running = False
+            messages.send_message(messages.MSG_OPTIMIZER_FINALLY)
 
 
 #================================================================================================
@@ -200,6 +199,10 @@ class OptimizerController():
         self.last_plot_time = time.time()-10
         #Frequency of plotting
         self.plot_time_interval = 1
+
+        messages.subscribe(self.step_callback, messages.MSG_OPTIMIZER_STEP)
+        messages.subscribe(self.complete, messages.MSG_OPTIMIZER_COMPLETE)
+        messages.subscribe(self.finally_callback, messages.MSG_OPTIMIZER_FINALLY)
 
     #--------------------------------------------------------------------
     def restore_buttons(self):
@@ -245,12 +248,13 @@ class OptimizerController():
     #--------------------------------------------------------------------
     def start(self, event, *args):
         """Start the optimization."""
-        self._want_abort = False
         self.start_time = time.time()
         self.init_data()
+        self.set_abort(False)
         #Start the thread
         self.params.use_old_population = False
-        self.run_thread = OptimizationThread(self)
+        self.params.optimization_running = True
+        self.run_thread = OptimizationThread(self.params)
         #Set the buttons right away.
         frm = self.frame #@type frm FrameOptimizer
         frm.buttonStart.Enable((self.run_thread is None))
@@ -266,21 +270,22 @@ class OptimizerController():
             wx.MessageDialog(self.frame, "Error! No saved population. You need to start the optimization at least once.").ShowModal()
             return
 
-#        if s:
-#            wx.MessageDialog("Number of sample orientations has changed. Cannot keep going with the old population.").ShowModal()
-#            return;
-
         if (self.params.population != len(self.last_population)) or (self.last_population[0].listSize != self.params.number_of_orientations):
             wx.MessageDialog(self.frame, "Population size/number of orientations changed. The new population will be selected randomly from the old one, and may not be as good.", style=wx.OK).ShowModal()
 
-        self._want_abort = False
+        self.set_abort(False)
+
         self.start_time = time.time()
         self.init_data()
 
         #Start the thread
+        if 'op' in globals():
+            global op
+            self.params = op
+
         self.params.use_old_population = True
         self.params.add_trait("old_population", self.last_population)
-        self.run_thread = OptimizationThread(self)
+        self.run_thread = OptimizationThread(self.params)
 
         #Set the buttons right away.
         frm = self.frame #@type frm FrameOptimizer
@@ -288,28 +293,31 @@ class OptimizerController():
         frm.buttonStop.Enable(not (self.run_thread is None))
 
         self.frame.staticTextComplete.SetLabel("Optimization started...")
-        if not event is None: event.Skip()
 
     #--------------------------------------------------------------------
     def stop(self, event, *args):
         """Stop the optimization."""
-        self._want_abort = True
+        self.set_abort(True)
         #Will have to wait for the next generation to stop
         if not event is None: event.Skip()
 
     #--------------------------------------------------------------------
+    def set_abort(self, value):
+        self.params._want_abort = value
+        if 'op' in globals():
+            global op
+            op._want_abort = value
+
+    #--------------------------------------------------------------------
     def close_form(self, event, *args):
         """Call when the form is closing. Aborth the thread if it is running."""
-        self._want_abort = True
+        self.set_abort(True)
         #Marker to avoid trying to change GUI
         self.frame = None
         #For the singleton
         global _instance
         _instance = None
         if not event is None: event.Skip()
-
-
-
 
     #--------------------------------------------------------------------
     def init_data(self):
@@ -364,7 +372,6 @@ class OptimizerController():
             #Done!
             print "Optimization finished in %.3f seconds." % (time.time() - self.start_time)
 
-
     #--------------------------------------------------------------------
     def step_callback(self, ga, *args):
         """Callback during evolution; used to abort it and to display
@@ -391,11 +398,11 @@ class OptimizerController():
             #Enough time has passed, plot the graph
             wx.CallAfter(self.plot_data)
         wx.CallAfter(self.update)
-        return self._want_abort
 
-
-
-
+    #--------------------------------------------------------------------
+    def finally_callback(self, *args):
+        self.restore_buttons()
+        self.params.optimization_running = False
 
 
     #--------------------------------------------------------------------

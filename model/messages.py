@@ -37,6 +37,14 @@ MSG_POSITION_SELECTION_CHANGED = "MSG_POSITION_SELECTION_CHANGED"
 MSG_UPDATE_MAIN_STATUSBAR = "MSG_UPDATE_MAIN_STATUSBAR"
 
 #========================================================================================================
+# FRAME_OPTIMIZER.PY
+#========================================================================================================
+MSG_OPTIMIZER_STEP = "MSG_OPTIMIZER_STEP"
+MSG_OPTIMIZER_COMPLETE = "MSG_OPTIMIZER_COMPLETE"
+MSG_OPTIMIZER_FINALLY = "MSG_OPTIMIZER_FINALLY"
+MSG_OPTIMIZER_FINALLY = "MSG_OPTIMIZER_ABORT"
+
+#========================================================================================================
 #   OTHERS
 #========================================================================================================
 MSG_GONIOMETER_CHANGED = "MSG_GONIOMETER_CHANGED"
