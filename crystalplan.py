@@ -13,6 +13,11 @@ Version: $Id$
 # Version: $Id$
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = 'wx'
-#Simply import and launch the GUI
-import gui.main
-gui.main.handle_arguments_and_launch(InstalledVersion=True)
+
+if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
+
+    #Simply import and launch the GUI
+    import gui.main
+    gui.main.handle_arguments_and_launch(InstalledVersion=True)

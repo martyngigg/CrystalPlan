@@ -15,7 +15,13 @@ import traceback
 import datetime
 from optparse import OptionParser
 import wx
+import vtk
 
+# Send VTK error output to a file instead of a window.
+errOut = vtk.vtkFileOutputWindow()
+errOut.SetFileName("VTK Error Out.txt")
+vtkStdErrOut = vtk.vtkOutputWindow()
+vtkStdErrOut.SetInstance(errOut)
 
 
 
@@ -187,7 +193,7 @@ def launch_gui(inelastic, hb3a):
     model.experiment.exp.recalculate_reflections(None)
 
     #Initialize the application
-    application = CrystalPlanApp(0)
+    application = CrystalPlanApp()
 
     #Start the thread that monitors changes to the q-space coverage calculation.
     if True: #To try it with and without
@@ -204,7 +210,6 @@ def launch_gui(inelastic, hb3a):
         #Catch the latest error and report it
         xc = traceback.format_exception(*sys.exc_info())
         wx.MessageBox("Exception caught in MainLoop!\n\n" + ''.join(xc))
-
 
     #Exit the program and do all necessary clean-up.
     print "Exiting %s %s. Have a nice day!" % (CrystalPlan_version.package_name, CrystalPlan_version.version)

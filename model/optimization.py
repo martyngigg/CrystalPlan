@@ -365,8 +365,8 @@ def get_angles(genome):
     """Extract the list of lists of angles from the genome; for use by eval_func"""
     global op #@type op OptimizationParameters
     #@type instr Instrument
-    instr = instrument.inst
-    exp = experiment.exp
+    instr = op.inst
+    exp = op.exp
 
     num_positions = len(genome)
     umatrix = exp.crystal.get_u_matrix()
@@ -399,7 +399,7 @@ def eval_func(genome, verbose=False):
         all_positions += op.fixed_orientations_list
 
     #@type exp Experiment
-    exp = experiment.exp
+    exp = op.exp
     #Calculate (this calculates the stats)
     exp.recalculate_reflections(all_positions, calculation_callback=None)
     #Calculate the stats with edge avoidance if an option
@@ -485,7 +485,7 @@ def eval_func_volume(genome, verbose=False):
     This one uses the volume coverage."""
     global op #@type op OptimizationParameters
     #@type instr Instrument
-    instr = instrument.inst
+    instr = op.inst
     instr.verbose = False
 
     positions = get_angles(genome)
@@ -504,7 +504,7 @@ def eval_func_volume(genome, verbose=False):
         pd[id(new_poscov)] = True
 
     #@type exp Experiment
-    exp = experiment.exp
+    exp = op.exp
 
     #Set all the parameters for evaluation
     #Don't add a trial position
@@ -572,7 +572,7 @@ def set_changeable_parameters(optim_params, ga):
     if optim_params.pre_mutation_rate >= 0: ga.setPreMutationRate(optim_params.pre_mutation_rate)
     if optim_params.crossover_rate >= 0: ga.setCrossoverRate(optim_params.crossover_rate)
     #Set the multiprocessing. full_copy=True because we change the individual!
-    ga.setMultiProcessing(optim_params.use_multiprocessing, full_copy=True, number_of_processes=optim_params.number_of_processors)
+    ga.setMultiProcessing(optim_params.use_multiprocessing, full_copy=False, number_of_processes=optim_params.number_of_processors)
     if optim_params.max_generations > 0: ga.setGenerations(optim_params.max_generations)
     ga.setElitism(optim_params.elitism)
     if optim_params.elitism_replacement > 0: ga.setElitismReplacement(optim_params.elitism_replacement)
@@ -592,8 +592,8 @@ def run_optimization(optim_params, step_callback=None):
     op = optim_params
 
     #The instrument to use
-    instr = instrument.inst
-    exp = experiment.exp
+    instr = op.inst
+    exp = op.exp
     exp.verbose = False
 
     # Genome instance, list of list of angles
@@ -670,6 +670,7 @@ def run_optimization(optim_params, step_callback=None):
 
     freq_stats = 0
     if __name__ == "__main__": freq_stats = 1
+    #ga.setMultiProcessing(False)
     (best, aborted, converged) = ga.evolve(freq_stats=freq_stats, skip_initialize=skip_initializer)
 
     ga.getPopulation().sort()

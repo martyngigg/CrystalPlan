@@ -21,7 +21,7 @@ import gui_utils
 
 #--- Model Imports ----
 import model
-from model import messages
+from model import messages, instrument, experiment
 from model.optimization import OptimizationParameters
 import CrystalPlan_version
 
@@ -156,6 +156,8 @@ class OptimizationThread(threading.Thread):
     def __init__ (self, params):
         threading.Thread.__init__(self)
         self.params = params
+        self.params.inst = instrument.inst
+        self.params.exp = experiment.exp
         self.start() #Start on creation
 
     def run(self):
