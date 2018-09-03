@@ -494,7 +494,7 @@ float fitness_function(float phi, float chi, float omega, const std::string& fun
 }
 
 
-int angle_fitness(const VectorD& rot_angle_list, const VectorD& ending_vec, const MatrixD& initial_rotation_matrix, VectorD& fitnesses, VectorD& chi_list, VectorD& phi_list, VectorD& omega_list, const std::string& func_name, const VectorD& params) {
+void angle_fitness(const VectorD& rot_angle_list, const VectorD& ending_vec, const MatrixD& initial_rotation_matrix, VectorD& fitnesses, VectorD& chi_list, VectorD& phi_list, VectorD& omega_list, const std::string& func_name, const VectorD& params) {
     float rot_angle;
     int angle_num;
     int output_index = 0;

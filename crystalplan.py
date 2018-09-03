@@ -11,7 +11,8 @@ Version: $Id$
 """
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
 # Version: $Id$
-
+from traits.etsconfig.api import ETSConfig
+ETSConfig.toolkit = 'wx'
 #Simply import and launch the GUI
 import gui.main
 gui.main.handle_arguments_and_launch(InstalledVersion=True)
