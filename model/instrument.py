@@ -73,7 +73,7 @@ class PositionCoverage:
     """Class holding the results of the calculated detector coverage at a given position(orientation).
     A list of these will be a member of the Instrument class."""
 
-    def __init__(self, angles, coverage, sample_U_matrix):
+    def __init__(self, angles, coverage, sample_U_matrix, instrument_obj=None):
         """Constructor, initialize angles and coverage.
 
         Parameters:
@@ -83,6 +83,8 @@ class PositionCoverage:
             sample_U_matrix: 3x3 matrix describing the sample mounting orientation.
 
         """
+        if instrument_obj is None:
+            instrument_obj = inst
         #Angles of the sample, (a list). Length needs to match instrument.angles
         if isinstance(angles, np.ndarray):
             #Convert to a list
@@ -97,7 +99,7 @@ class PositionCoverage:
         #Criterion for stopping measurement, a string
         #Value (float) associated with the criterion. Could be runtime in seconds, etc.
         try:
-            (self.criterion, self.criterion_value) = inst.get_default_stopping_criterion()
+            (self.criterion, self.criterion_value) = instrument_obj.get_default_stopping_criterion()
         except:
             (self.criterion, self.criterion_value) = ("runtime", 0)
         #A comment string
@@ -241,7 +243,8 @@ class Instrument:
     def __getstate__(self):
         """Return a dictionary containing all the stuff to pickle."""
         #Exclude all these attributes. Make sure to exclude properties!!!
-        exclude_list = ['qspace_radius', 'detectors', 'qlim']
+        # exclude_list = ['qspace_radius', 'detectors', 'qlim']
+        exclude_list = []
         return utils.getstate_except(self, exclude_list)
 
     #========================================================================================================
@@ -251,6 +254,7 @@ class Instrument:
 
         #Things to NOT load; fix old files.
         exclude_list = ['qlim']
+        exclude_list = []
 
         for (key, value) in d.items():
             if not (key in exclude_list):
@@ -261,13 +265,13 @@ class Instrument:
 
         #Now, re-load the detectors
         #TODO: Check that the file still exists!
-        if not self.detector_filename is None:
-            self.load_detectors_file(self.detector_filename)
+        # if not self.detector_filename is None:
+        #     self.load_detectors_file(self.detector_filename)
         #Generate your q-space stuff
-        self.make_qspace()
-        #Re-calculate all the positions (with all detectors enabled)
-        for poscov in self.positions: #@type poscov PositionCoverage
-            poscov.coverage = self.calculate_coverage(self.detectors, poscov.angles, poscov.sample_U_matrix, use_inline_c=True)
+        #self.make_qspace()
+        ##Re-calculate all the positions (with all detectors enabled)
+        #for poscov in self.positions: #@type poscov PositionCoverage
+        #    poscov.coverage = self.calculate_coverage(self.detectors, poscov.angles, poscov.sample_U_matrix, use_inline_c=True)
 
 
 #    #---------------------------------------------------------------------------------------------
@@ -314,6 +318,7 @@ class Instrument:
     #---------------------------------------------------------------------------------------------
     def load_detectors_csv_file(self, filename):
         """Load the detector geometry from a CSV file."""
+        print("Loading instrument {}".format(filename))
         #Initialize members
         old_list = self.detectors
         self.detectors = list()
@@ -328,7 +333,6 @@ class Instrument:
             # Skip other comment rows
             lines = filter(lambda line: len(line) > 0 and "#" not in line[0], list(reader))
 
-            print lines
             count = 1
             for row in lines:
                 if cylindrical:

@@ -252,7 +252,6 @@ class OptimizerController():
         """Start the optimization."""
         self.start_time = time.time()
         self.init_data()
-        self.set_abort(False)
         #Start the thread
         self.params.use_old_population = False
         self.params.optimization_running = True
@@ -275,16 +274,10 @@ class OptimizerController():
         if (self.params.population != len(self.last_population)) or (self.last_population[0].listSize != self.params.number_of_orientations):
             wx.MessageDialog(self.frame, "Population size/number of orientations changed. The new population will be selected randomly from the old one, and may not be as good.", style=wx.OK).ShowModal()
 
-        self.set_abort(False)
-
         self.start_time = time.time()
         self.init_data()
 
         #Start the thread
-        if 'op' in globals():
-            global op
-            self.params = op
-
         self.params.use_old_population = True
         self.params.add_trait("old_population", self.last_population)
         self.run_thread = OptimizationThread(self.params)
@@ -299,21 +292,14 @@ class OptimizerController():
     #--------------------------------------------------------------------
     def stop(self, event, *args):
         """Stop the optimization."""
-        self.set_abort(True)
+        messages.send_message(messages.MSG_OPTIMIZER_ABORT)
         #Will have to wait for the next generation to stop
         if not event is None: event.Skip()
 
     #--------------------------------------------------------------------
-    def set_abort(self, value):
-        self.params._want_abort = value
-        if 'op' in globals():
-            global op
-            op._want_abort = value
-
-    #--------------------------------------------------------------------
     def close_form(self, event, *args):
         """Call when the form is closing. Aborth the thread if it is running."""
-        self.set_abort(True)
+        messages.send_message(messages.MSG_OPTIMIZER_ABORT)
         #Marker to avoid trying to change GUI
         self.frame = None
         #For the singleton
@@ -375,18 +361,21 @@ class OptimizerController():
             print "Optimization finished in %.3f seconds." % (time.time() - self.start_time)
 
     #--------------------------------------------------------------------
-    def step_callback(self, ga, *args):
+    def step_callback(self, ga, params, *args):
         """Callback during evolution; used to abort it and to display
         stats."""
+        self.params = params
         #@type ga GSimpleGA
         op = self.params #@type op OptimizationParameters
 
         #Find the best individual
         self.best = ga.bestIndividual()
-        self.best_coverage = self.best.coverage
+        self.best.coverage = ga.bestIndividual().getFitnessScore()
+        score = ga.bestIndividual().getRawScore()
         #More stats
         stats = ga.getStatistics()
         self.average_coverage = stats["rawAve"]
+        self.best_coverage = stats["rawMax"]
         #Other stats
         self.currentGeneration = ga.currentGeneration
         #Log the stats too
@@ -414,7 +403,7 @@ class OptimizerController():
         positions = []
 
         # Get the angles of the best one
-        positions += model.optimization.get_angles(self.best)
+        positions += model.optimization.get_angles(self.params, self.best)
 
         print "Applying best individual", self.best
 
@@ -663,10 +652,6 @@ Click Apply Results while optimizing to see the current best solution.""",
         self.params_control = self.controller.params.edit_traits(parent=self.panelParams,kind='subpanel').control
         self.boxSizerParams.Insert(2, self.params_control, 0, border=1, flag=wx.EXPAND)
         self.boxSizerParams.Layout()
-
-
-
-
 
 
 if __name__ == "__main__":

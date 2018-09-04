@@ -106,7 +106,9 @@ class GeneAngles(object):
     algorithm"""
 
     #---------------------------------------------------------------
-    def __init__(self, copied_object=None):
+    def __init__(self, instr, exp, copied_object=None):
+        self.instr = instr
+        self.exp = exp
         #This will initialize the angles at random
         if copied_object is None:
             self.mutate()
@@ -116,7 +118,7 @@ class GeneAngles(object):
 
     #---------------------------------------------------------------
     def __str__(self):
-        instr = instrument.inst
+        instr = self.instr
         return "(%s)" % ", ".join([ai.pretty_print(value, True) for (ai, value) in zip(instr.angles, self.angles)])
 
     #---------------------------------------------------------------
@@ -126,11 +128,10 @@ class GeneAngles(object):
     #---------------------------------------------------------------
     def mutate(self):
         """Mutate (randomize) the angles."""
-        instr = instrument.inst
         #Match the # of angle
         self.angles = []
         #@type ai AngleInfo
-        for ai in instr.angles:
+        for ai in self.instr.angles:
             #Pick a random angle and add it
             self.angles.append( ai.get_random() )
 
@@ -139,7 +140,7 @@ class GeneAngles(object):
         """Randomly nudge the position by the provided amount (in % of the allowable range)"""
         if percent <= 0: return
         for i in xrange(len(self.angles)):
-            angle_info = instrument.inst.angles[i] #@type angle_info AngleInfo
+            angle_info = self.instr.angles[i] #@type angle_info AngleInfo
             max = angle_info.random_range[1]
             min = angle_info.random_range[0]
             amount = (max - min) * percent / 100.0
@@ -154,19 +155,22 @@ class GeneAngles(object):
 class ChromosomeAngles(G1DList.G1DList):
     """Subclass of G1D List fixing the copy and clone() methods."""
     premutator = None
+
     #---------------------------------------------------------------
-    def __init__(self, size):
+    def __init__(self, size, instr, exp):
         #Call the parent initializer
         #print "ChromosomeAngles init"
         G1DList.G1DList.__init__(self, size)
         GenomeBase.GenomeBase.__init__(self)
         self.genomeList = []
         self.listSize = size
+        self.instr = instr
+        self.exp = exp
 
     #---------------------------------------------------------------
     def randomize(self):
         """Make a random genome for this chromosome."""
-        self.genomeList = [GeneAngles() for x in xrange(self.listSize)]
+        self.genomeList = [GeneAngles(self.instr, self.exp) for x in xrange(self.listSize)]
 
     #---------------------------------------------------------------
     def copy(self, g, keep_list_size=False):
@@ -187,14 +191,14 @@ class ChromosomeAngles(G1DList.G1DList):
                 setattr(g, att, getattr(self, att))
 
         #Do a copy of each "GeneAngles" object
-        g.genomeList = [GeneAngles(x) for x in self.genomeList]
+        g.genomeList = [GeneAngles(self.instr, self.exp, copied_object=x) for x in self.genomeList]
 
         if keep_list_size and not (g.listSize == self.listSize):
             #Adjust the copied size
             diff = g.listSize - self.listSize
             if diff > 0:
                 #Need to add diff random elements
-                g.genomeList += [GeneAngles() for x in xrange(diff)]
+                g.genomeList += [GeneAngles(self.instr, self.exp) for x in xrange(diff)]
             elif diff < 0:
                 #Remove -diff elements at random
                 while diff < 0:
@@ -208,64 +212,81 @@ class ChromosomeAngles(G1DList.G1DList):
     def clone(self):
         """ Return a new instace copy of the genome
         :rtype: the G1DList clone instance"""
-        newcopy = ChromosomeAngles(self.listSize)
+        newcopy = ChromosomeAngles(self.listSize, self.instr, self.exp)
         self.copy(newcopy)
         return newcopy
 
+# ===========================================================================================
+class ChromosomeWithParameters(object):
+
+    def __init__(self, params):
+        self.params = params
 
 # ===========================================================================================
-def ChromosomeInitializatorRandom(genome, **args):
-    """ Randomized Initializator for the Chromosome
-    """
-    #   print "ChromosomeInitializatorRandom"
-    #Make a list of new chromosome objects, which are randomized by default
-    genome.genomeList = [GeneAngles() for i in xrange(genome.getListSize())]
+class ChromosomeInitializatorRandom(ChromosomeWithParameters):
+    def __init__(self, params):
+        super(ChromosomeInitializatorRandom, self).__init__(params)
 
-
-# ===========================================================================================
-def ChromosomeInitializatorUseOldPopulation(genome, **args):
-    """ Initializator that takes old individuals instead of new ones.
-    """
-    #   print "ChromosomeInitializatorUseOldPopulation"
-    #Pick an old individual using roulette wheel
-    old_pop = genome.getParam("old_population")
-    old_pop_ID = genome.getParam("old_population_ID")
-    old_individual = Selectors.GRouletteWheel(old_pop, popID=old_pop_ID)
-    if len(old_individual[0].angles) != len(instrument.inst.angles):
-        print "The number of angles in the goniometer has changed, so copying the population is impossible. Re-starting from scratch."
-        #We create a random one
-        genome.randomize()
-    else:
-        #Copy all the genes
-        old_individual.copy(genome, keep_list_size=True)
+    def __call__(self, genome, **args):
+        """ Randomized Initializator for the Chromosome
+        """
+        #   print "ChromosomeInitializatorRandom"
+        #Make a list of new chromosome objects, which are randomized by default
+        genome.genomeList = [GeneAngles(self.params.inst, self.params.exp) for i in xrange(genome.getListSize())]
 
 
 # ===========================================================================================
-def ChromosomeMutatorRandomize(genome, **args):
-    """ Mutator for a chromosome. Changes one gene to random values."""
-    if args["pmut"] <= 0.0: return 0 #No mutants?
-    listSize = len(genome)
-    mutations = args["pmut"] * (listSize)
-    global op #@type op OptimizationParameters
+class ChromosomeInitializatorUseOldPopulation(ChromosomeWithParameters):
+    def __init__(self, params):
+        super(ChromosomeInitializatorUseOldPopulation, self).__init__(params)
 
-    if mutations < 1.0:
-        mutations = 0
-        for it in xrange(listSize):
-            if pyevolve.Util.randomFlipCoin(args["pmut"]):
-                if op.mutate_by_nudging:
-                    genome[it].nudge(op.nudge_amount)
+    def __call__(self, genome, **args):
+        """ Initializator that takes old individuals instead of new ones.
+        """
+        #   print "ChromosomeInitializatorUseOldPopulation"
+        #Pick an old individual using roulette wheel
+        old_pop = genome.getParam("old_population")
+        old_pop_ID = genome.getParam("old_population_ID")
+        old_individual = Selectors.GRouletteWheel(old_pop, popID=old_pop_ID)
+        if len(old_individual[0].angles) != len(self.params.inst.angles):
+            print "The number of angles in the goniometer has changed, so copying the population is impossible. Re-starting from scratch."
+            #We create a random one
+            genome.randomize()
+        else:
+            #Copy all the genes
+            old_individual.copy(genome, keep_list_size=True)
+
+
+# ===========================================================================================
+class ChromosomeMutatorRandomize(ChromosomeWithParameters):
+
+    def __init__(self, params):
+        super(ChromosomeMutatorRandomize, self).__init__(params)
+
+    def __call__(self, genome, **args):
+        """ Mutator for a chromosome. Changes one gene to random values."""
+        if args["pmut"] <= 0.0: return 0 #No mutants?
+        listSize = len(genome)
+        mutations = args["pmut"] * (listSize)
+
+        if mutations < 1.0:
+            mutations = 0
+            for it in xrange(listSize):
+                if pyevolve.Util.randomFlipCoin(args["pmut"]):
+                    if self.params.mutate_by_nudging:
+                        genome[it].nudge(self.params.nudge_amount)
+                    else:
+                        genome[it].mutate()
+
+                    mutations += 1
+        else:
+            for it in xrange(int(round(mutations))):
+                which_gene = random.randint(0, listSize-1)
+                if self.params.mutate_by_nudging:
+                    genome[which_gene].nudge(self.params.nudge_amount)
                 else:
-                    genome[it].mutate()
-
-                mutations += 1
-    else:
-        for it in xrange(int(round(mutations))):
-            which_gene = random.randint(0, listSize-1)
-            if op.mutate_by_nudging:
-                genome[which_gene].nudge(op.nudge_amount)
-            else:
-                genome[which_gene].mutate()
-    return int(mutations)
+                    genome[which_gene].mutate()
+        return int(mutations)
 
 
 # ===========================================================================================
@@ -283,51 +304,54 @@ def ChromosomeMutatorRandomizeAll(genome, **args):
 
 
 # ===========================================================================================
-def ChromosomeMutatorRandomizeWorst(genome, **args):
-    """ Mutator for a chromosome.
-    Finds the orientation giving the most redundant peaks, and randomizes it.
-    """
-    pmut = args["pmut"]
-    if pmut <= 0.0: return 0 #No mutants?
+class ChromosomeMutatorRandomizeWorst(ChromosomeWithParameters):
 
-    if not hasattr(genome, 'unique_measurements') or genome.unique_measurements is None:
-        #print "ChromosomeMutatorRandomizeWorst: Error: Can't find worst gene list."
-        return 0
+    def __init__(self, params):
+        super(ChromosomeMutatorRandomizeWorst, self).__init__(params)
 
-    #Do the given # of mutations, but flip a coin if non-integer
-    num_mutations = int(pmut)
-    if pmut - num_mutations > 0:
-        if pyevolve.Util.randomFlipCoin(pmut - num_mutations):
-            num_mutations += 1
-    if num_mutations >= len(genome):
-        num_mutations = len(genome)
+    def __call__(self, genome, **args):
+        """ Mutator for a chromosome.
+        Finds the orientation giving the most redundant peaks, and randomizes it.
+        """
+        pmut = args["pmut"]
+        if pmut <= 0.0: return 0 #No mutants?
 
-    #Okay, now we need to look at each orientation to see which one is most redundant
-    if num_mutations == 1:
-        #--- Just one mutation ---
-        global op #@type op OptimizationParameters
-        if op.worst_gene_location_randomizer > 0:
-            #Possibly move the single mutation around
-            offset = int(np.round(np.abs(np.random.normal(scale=op.worst_gene_location_randomizer))))
-            if offset >= len(genome):
-                offset = len(genome)-1
+        if not hasattr(genome, 'unique_measurements') or genome.unique_measurements is None:
+            #print "ChromosomeMutatorRandomizeWorst: Error: Can't find worst gene list."
+            return 0
+
+        #Do the given # of mutations, but flip a coin if non-integer
+        num_mutations = int(pmut)
+        if pmut - num_mutations > 0:
+            if pyevolve.Util.randomFlipCoin(pmut - num_mutations):
+                num_mutations += 1
+        if num_mutations >= len(genome):
+            num_mutations = len(genome)
+
+        #Okay, now we need to look at each orientation to see which one is most redundant
+        if num_mutations == 1:
+            #--- Just one mutation ---
+            if self.params.worst_gene_location_randomizer > 0:
+                #Possibly move the single mutation around
+                offset = int(np.round(np.abs(np.random.normal(scale=self.params.worst_gene_location_randomizer))))
+                if offset >= len(genome):
+                    offset = len(genome)-1
+            else:
+                offset = 0
+
+            worst_genes = [genome.unique_measurements[offset][1]]
+
         else:
-            offset = 0
+            #--- Just do the n-th worst ones ----
 
-        worst_genes = [genome.unique_measurements[offset][1]]
+            #This is the index of the n-th entry in the # of unique measurements (the worst one)
+            worst_genes = [x[1] for x in genome.unique_measurements[0:num_mutations]]
 
-    else:
-        #--- Just do the n-th worst ones ----
+        #We randomize these bad genes
+        for bad_gene in worst_genes:
+            genome[bad_gene] = GeneAngles(self.params.inst, self.params.exp)
 
-        #This is the index of the n-th entry in the # of unique measurements (the worst one)
-        worst_genes = [x[1] for x in genome.unique_measurements[0:num_mutations]]
-
-    #We randomize these bad genes
-    for bad_gene in worst_genes:
-        genome[bad_gene] = GeneAngles()
-
-    return int(num_mutations)
-
+        return int(num_mutations)
 
 
 # ===========================================================================================
@@ -359,12 +383,9 @@ def ChromosomeCrossoverSinglePoint(genome, **args):
 
     return (sister, brother)
 
-
-#-----------------------------------------------------------------------------------------------
-def get_angles(genome):
+def get_angles(params, genome):
     """Extract the list of lists of angles from the genome; for use by eval_func"""
-    global op #@type op OptimizationParameters
-    #@type instr Instrument
+    op = params
     instr = op.inst
     exp = op.exp
 
@@ -384,176 +405,201 @@ def get_angles(genome):
             positions.append( None )
 
     return positions
+# ===========================================================================================
+class EvalFunctor(object):
 
-#-----------------------------------------------------------------------------------------------
-def eval_func(genome, verbose=False):
-    """Fitness evaluation function for a chromosome in coverage optimization."""
-    global op #@type op OptimizationParameters
+    def __init__(self, params):
+        self.params = copy.deepcopy(params)
 
-    positions = get_angles(genome)
-    # Copy
-    all_positions = list(positions)
+    #-----------------------------------------------------------------------------------------------
+    def get_angles(self, genome):
+        """Extract the list of lists of angles from the genome; for use by eval_func"""
+        return get_angles(self.params, genome)
 
-    if op.fixed_orientations:
-        # Append the fixed positions?
-        all_positions += op.fixed_orientations_list
+# ===========================================================================================
+class EvalReflectionCoverageFunctor(EvalFunctor):
 
-    #@type exp Experiment
-    exp = op.exp
-    #Calculate (this calculates the stats)
-    exp.recalculate_reflections(all_positions, calculation_callback=None)
-    #Calculate the stats with edge avoidance if an option
-    exp.calculate_reflection_coverage_stats(op.avoid_edges, op.edge_x_mm, op.edge_y_mm)
+    def __init__(self, params):
+        super(EvalReflectionCoverageFunctor, self).__init__(params)
 
-    if op.avoid_edges:
-        #Use this fraction
-        if op.use_symmetry:
-            coverage = exp.reflection_stats_adjusted_with_symmetry.measured * 1.0 / exp.reflection_stats_adjusted_with_symmetry.total
+    #-----------------------------------------------------------------------------------------------
+    def __call__(self, genome, verbose=False):
+        """Fitness evaluation function for a chromosome in coverage optimization."""
+        op = self.params
+
+        positions = self.get_angles(genome)
+        # Copy
+        all_positions = list(positions)
+
+        if op.fixed_orientations:
+            # Append the fixed positions?
+            all_positions += op.fixed_orientations_list
+
+        #@type exp Experiment
+        exp = op.exp
+        #Calculate (this calculates the stats)
+        exp.recalculate_reflections(all_positions, calculation_callback=None)
+        #Calculate the stats with edge avoidance if an option
+        exp.calculate_reflection_coverage_stats(op.avoid_edges, op.edge_x_mm, op.edge_y_mm)
+
+        if op.avoid_edges:
+            #Use this fraction
+            if op.use_symmetry:
+                coverage = exp.reflection_stats_adjusted_with_symmetry.measured * 1.0 / exp.reflection_stats_adjusted_with_symmetry.total
+            else:
+                coverage = exp.reflection_stats_adjusted.measured * 1.0 / exp.reflection_stats_adjusted.total
+
         else:
-            coverage = exp.reflection_stats_adjusted.measured * 1.0 / exp.reflection_stats_adjusted.total
+            #No edge avoidance
 
-    else:
-        #No edge avoidance
+            #Return the measured fraction
+            if op.use_symmetry:
+                coverage = exp.reflection_stats_with_symmetry.measured * 1.0 / exp.reflection_stats_with_symmetry.total
+            else:
+                coverage = exp.reflection_stats.measured * 1.0 / exp.reflection_stats.total
 
-        #Return the measured fraction
+
+        #----- Now we determine the least useful measurements ------
+        positions_id = [id(x) for x in positions]
+
+        #Initialize a dictionary with the measurement redundancy
+        unique_measurements = [0]*len(positions_id)
+        poscovid_map = {}
+        for (i, poscovid) in enumerate(positions_id):
+            poscovid_map[poscovid] = i
+
         if op.use_symmetry:
-            coverage = exp.reflection_stats_with_symmetry.measured * 1.0 / exp.reflection_stats_with_symmetry.total
+            #Do a check using symmetry
+            for refl in exp.reflections: #@type refl Reflection
+                if refl.is_primary and refl.times_measured(None, add_equivalent_ones=op.use_symmetry) == 1:
+                    #Non-redundant measurement
+                    poscovid = refl.get_all_measurements()[0][0]
+                    # Ignore measurements from the fixed orientations
+                    if poscovid in positions_id:
+                        #Find the index in positions list, add 1
+                        unique_measurements[poscovid_map[poscovid]] += 1
+
         else:
-            coverage = exp.reflection_stats.measured * 1.0 / exp.reflection_stats.total
+            #Check without considering symmetry
+            for refl in exp.reflections: #@type refl Reflection
+                #If we're using symmetry, skip the check for non-primary beams.
+                if len(refl.measurements)==1:
+                    #Non-redundant measurement
+                    poscovid = refl.measurements[0][0]
+                    # Ignore measurements from the fixed orientations
+                    if poscovid in positions_id:
+                        #Find the index in positions list, add 1
+                        unique_measurements[poscovid_map[poscovid]] += 1
 
+        #Sort them by the # of unique measurements
+        decorated = zip(unique_measurements, range(len(positions_id)))
+        decorated.sort()
 
-    #----- Now we determine the least useful measurements ------
-    positions_id = [id(x) for x in positions]
+        #Save the sorted list of (unique_measurements, index into the list of genes)
+        genome.unique_measurements = decorated
+        #Save the coverage value
+        genome.coverage = coverage
 
-    #Initialize a dictionary with the measurement redundancy
-    unique_measurements = [0]*len(positions_id)
-    poscovid_map = {}
-    for (i, poscovid) in enumerate(positions_id):
-        poscovid_map[poscovid] = i
+        if verbose:
+            print  "Fitness: had %3d positions, score was %7.3f" % (len(positions), coverage)
 
-    if op.use_symmetry:
-        #Do a check using symmetry
-        for refl in exp.reflections: #@type refl Reflection
-            if refl.is_primary and refl.times_measured(None, add_equivalent_ones=op.use_symmetry) == 1:
-                #Non-redundant measurement
-                poscovid = refl.get_all_measurements()[0][0]
-                # Ignore measurements from the fixed orientations
-                if poscovid in positions_id:
-                    #Find the index in positions list, add 1
-                    unique_measurements[poscovid_map[poscovid]] += 1
+        #Score is equal to the coverage
+        score = coverage
+        invalid_positions = len(genome)-len(all_positions)
+        if invalid_positions > 0:
+            #There some invalid positions. Penalize the score
+            score -= (1.0 * invalid_positions) / len(genome)
+            if score < 0: score = 0
 
-    else:
-        #Check without considering symmetry
-        for refl in exp.reflections: #@type refl Reflection
-            #If we're using symmetry, skip the check for non-primary beams.
-            if len(refl.measurements)==1:
-                #Non-redundant measurement
-                poscovid = refl.measurements[0][0]
-                # Ignore measurements from the fixed orientations
-                if poscovid in positions_id:
-                    #Find the index in positions list, add 1
-                    unique_measurements[poscovid_map[poscovid]] += 1
+        return score
 
-    #Sort them by the # of unique measurements
-    decorated = zip(unique_measurements, range(len(positions_id)))
-    decorated.sort()
+# ===========================================================================================
+class EvalVolumeCoverageFunctor(EvalFunctor):
 
-    #Save the sorted list of (unique_measurements, index into the list of genes)
-    genome.unique_measurements = decorated
-    #Save the coverage value
-    genome.coverage = coverage
+    def __init__(self, params):
+        super(EvalVolumeCoverageFunctor, self).__init__(params)
 
-    if verbose:
-        print  "Fitness: had %3d positions, score was %7.3f" % (len(positions), coverage)
+    #-----------------------------------------------------------------------------------------------
+    def __call__(self, genome, verbose=False):
+        """Fitness evaluation function for a chromosome in coverage optimization.
+        This one uses the volume coverage."""
+        op = self.params
+        #@type instr Instrument
+        instr = op.inst
+        instr.verbose = False
 
-    #Score is equal to the coverage
-    score = coverage
-    invalid_positions = len(genome)-len(all_positions)
-    if invalid_positions > 0:
-        #There some invalid positions. Penalize the score
-        score -= (1.0 * invalid_positions) / len(genome)
-        if score < 0: score = 0
+        positions = self.get_angles(genome)
+        # Copy
+        all_positions = list(positions)
 
-    return score
+        if op.fixed_orientations:
+            # Append the fixed positions?
+            all_positions += op.fixed_orientations_list
 
+        #Calculate everything
+        instr.positions = []
+        pd = {}
+        for poscov in all_positions: #@type poscov PositionCoverage
+            new_poscov = instr.simulate_position(poscov.angles, poscov.sample_U_matrix, use_multiprocessing=False, silence_messages=True)
+            pd[id(new_poscov)] = True
 
+        #@type exp Experiment
+        exp = op.exp
 
+        #Set all the parameters for evaluation
+        #Don't add a trial position
+        exp.params[experiment.PARAM_TRY_POSITION] = None
+        #Using symmetry is an option when starting optimization.
+        exp.params[experiment.PARAM_SYMMETRY] = experiment.ParamSymmetry(op.use_symmetry)
+        #All detectors
+        exp.params[experiment.PARAM_DETECTORS] = experiment.ParamDetectors([True]*len(instr.detectors))
+        #All positions
+        exp.params[experiment.PARAM_POSITIONS] = experiment.ParamPositions(pd)
+        #Don't invert
+        exp.params[experiment.PARAM_INVERT] = None
+        #Don't slice
+        exp.params[experiment.PARAM_SLICE] = None
 
-#-----------------------------------------------------------------------------------------------
-def eval_func_volume(genome, verbose=False):
-    """Fitness evaluation function for a chromosome in coverage optimization.
-    This one uses the volume coverage."""
-    global op #@type op OptimizationParameters
-    #@type instr Instrument
-    instr = op.inst
-    instr.verbose = False
+        #Calculate (this calculates the stats)
+        exp.calculate_coverage(None, None)
 
-    positions = get_angles(genome)
-    # Copy
-    all_positions = list(positions)
+        #This is the stat
+        coverage = exp.overall_coverage / 100.0
 
-    if op.fixed_orientations:
-        # Append the fixed positions?
-        all_positions += op.fixed_orientations_list
+        #Save the sorted list of (unique_measurements, index into the list of genes)
+        genome.unique_measurements = None
 
-    #Calculate everything
-    instr.positions = []
-    pd = {}
-    for poscov in all_positions: #@type poscov PositionCoverage
-        new_poscov = instr.simulate_position(poscov.angles, poscov.sample_U_matrix, use_multiprocessing=False, silence_messages=True)
-        pd[id(new_poscov)] = True
+        #Save the coverage value
+        genome.coverage = coverage
 
-    #@type exp Experiment
-    exp = op.exp
+        if verbose:
+            print  "Fitness: had %3d positions, score was %7.3f" % (len(positions), coverage)
 
-    #Set all the parameters for evaluation
-    #Don't add a trial position
-    exp.params[experiment.PARAM_TRY_POSITION] = None
-    #Using symmetry is an option when starting optimization.
-    exp.params[experiment.PARAM_SYMMETRY] = experiment.ParamSymmetry(op.use_symmetry)
-    #All detectors
-    exp.params[experiment.PARAM_DETECTORS] = experiment.ParamDetectors([True]*len(instr.detectors))
-    #All positions
-    exp.params[experiment.PARAM_POSITIONS] = experiment.ParamPositions(pd)
-    #Don't invert
-    exp.params[experiment.PARAM_INVERT] = None
-    #Don't slice
-    exp.params[experiment.PARAM_SLICE] = None
+        #Score is equal to the coverage
+        score = coverage
+        invalid_positions = len(genome)-len(all_positions)
+        if invalid_positions > 0:
+            #There some invalid positions. Penalize the score
+            score -= (1.0 * invalid_positions) / len(genome)
+            if score < 0: score = 0
 
-    #Calculate (this calculates the stats)
-    exp.calculate_coverage(None, None)
-
-    #This is the stat
-    coverage = exp.overall_coverage / 100.0
-
-    #Save the sorted list of (unique_measurements, index into the list of genes)
-    genome.unique_measurements = None
-
-    #Save the coverage value
-    genome.coverage = coverage
-
-    if verbose:
-        print  "Fitness: had %3d positions, score was %7.3f" % (len(positions), coverage)
-
-    #Score is equal to the coverage
-    score = coverage
-    invalid_positions = len(genome)-len(all_positions)
-    if invalid_positions > 0:
-        #There some invalid positions. Penalize the score
-        score -= (1.0 * invalid_positions) / len(genome)
-        if score < 0: score = 0
-
-    return score
+        return score
 
 
 #-----------------------------------------------------------------------------------------------
-def termination_func(ga_engine):
-    """Termination function for G.A. terminates evolution when
-    the desired fitness (coverage) is reached."""
-    global op #@type op OptimizationParameters
-    best_score = ga_engine.bestIndividual().score
-    #When you reach the desired coverage (in %) you are done.
-    return best_score * 100.0 >= op.desired_coverage
+class TerminationFunctor:
+
+    func_name = "TerminationFunctor"
+
+    def __init__(self, params):
+        self.params = params
+
+    def __call__(self, ga_engine):
+        """Termination function for G.A. terminates evolution when
+        the desired fitness (coverage) is reached."""
+        best_score = ga_engine.bestIndividual().score
+        #When you reach the desired coverage (in %) you are done.
+        return best_score * 100.0 >= self.params.desired_coverage
 
 
 
@@ -588,7 +634,6 @@ def run_optimization(optim_params, step_callback=None):
         step_callback: function called after every generation, that
             returns True to abort the optimization.
     """
-    global op #@type op OptimizationParameters
     op = optim_params
 
     #The instrument to use
@@ -597,7 +642,7 @@ def run_optimization(optim_params, step_callback=None):
     exp.verbose = False
 
     # Genome instance, list of list of angles
-    genome = ChromosomeAngles( op.number_of_orientations )
+    genome = ChromosomeAngles(op.number_of_orientations, instr, exp)
 
     # Save the fixed orientations at the start of it
     if op.fixed_orientations:
@@ -608,7 +653,7 @@ def run_optimization(optim_params, step_callback=None):
     skip_initializer = False
 
     #Make the initializator
-    genome.initializator.set(ChromosomeInitializatorRandom)
+    genome.initializator.set(ChromosomeInitializatorRandom(op))
 
     # But we may use a different way?
     if op.use_old_population:
@@ -619,12 +664,12 @@ def run_optimization(optim_params, step_callback=None):
             print "Population size and/or number of orientations are different. Will generate new population, picked randomly from the old one."
             #Save the population and a random ID as parameters
             genome.setParams( old_population=op.old_population, old_population_ID=random.randint(0, 10000000) )
-            genome.initializator.set(ChromosomeInitializatorUseOldPopulation)
+            genome.initializator.set(ChromosomeInitializatorUseOldPopulation(op))
 
     #Set the pre- and pos-mutators
-    genome.premutator.set(ChromosomeMutatorRandomizeWorst)
+    genome.premutator.set(ChromosomeMutatorRandomizeWorst(op))
 
-    genome.mutator.set(ChromosomeMutatorRandomize)
+    genome.mutator.set(ChromosomeMutatorRandomize(op))
 
     #The crossover - uniform (swapping elements)
     genome.crossover.set(ChromosomeCrossoverSinglePoint)
@@ -632,9 +677,11 @@ def run_optimization(optim_params, step_callback=None):
 
     # The evaluator function (evaluation function)
     if op.use_volume:
+        eval_func_volume = EvalVolumeCoverageFunctor(optim_params)
         genome.evaluator.set(eval_func_volume)
     else:
-        genome.evaluator.set(eval_func)
+        eval_func_reflections = EvalReflectionCoverageFunctor(optim_params)
+        genome.evaluator.set(eval_func_reflections)
 
     # Genetic Algorithm Instance
     #@type ga GSimpleGA
@@ -657,16 +704,26 @@ def run_optimization(optim_params, step_callback=None):
     #Changeable settings. Also copies the individuals to the copies for multiprocessing
     set_changeable_parameters(op, ga)
 
-    def do_callback(ga):
-        messages.send_message(messages.MSG_OPTIMIZER_STEP, ga=ga)
-        global op
-        return op._want_abort
+    class OptimisationCallBackFunctor:
+        func_name = "OptimisationCallBackFunctor"
+
+        def __init__(self, params):
+            self.params = params
+            self._want_abort = False
+            messages.subscribe(self.do_abort, messages.MSG_OPTIMIZER_ABORT)
+
+        def do_abort(self):
+            self._want_abort = True
+
+        def __call__(self, ga):
+            messages.send_message(messages.MSG_OPTIMIZER_STEP, ga=ga, params=self.params)
+            return self._want_abort
 
     #This is the function that can abort the progress.
-    ga.stepCallback.set(do_callback)
+    ga.stepCallback.set(OptimisationCallBackFunctor(op))
 
     #And this is the termination function
-    ga.terminationCriteria.set(termination_func)
+    ga.terminationCriteria.set(TerminationFunctor(op))
 
     freq_stats = 0
     if __name__ == "__main__": freq_stats = 1
@@ -687,68 +744,68 @@ def print_pop(ga_engine, *args):
         print  "score %7.3f; coverage %7.3f, %s" % (x.score, x.coverage, x.genomeList)
 
 
-if __name__ == "__main__":
-    #Inits
-    instrument.inst = instrument.Instrument("../instruments/TOPAZ_geom_all_2011.csv")
-    instrument.inst.set_goniometer(goniometer.TopazInHouseGoniometer())
+#if __name__ == "__main__":
+#    #Inits
+#    instrument.inst = instrument.Instrument("../instruments/TOPAZ_geom_all_2011.csv")
+#    instrument.inst.set_goniometer(goniometer.TopazInHouseGoniometer())
 
-    # Create a default position of 0,0,0
-    instrument.inst.positions = [PositionCoverage([0.0, 0.0, 0.0], None, np.identity(3)), PositionCoverage([1.0, 0.0, 0.0], None, np.identity(3))]
+#    # Create a default position of 0,0,0
+#    instrument.inst.positions = [PositionCoverage([0.0, 0.0, 0.0], None, np.identity(3)), PositionCoverage([1.0, 0.0, 0.0], None, np.identity(3))]
 
-    experiment.exp = experiment.Experiment(instrument.inst)
-    exp = experiment.exp
-    exp.initialize_reflections()
-    exp.verbose = False
-
-
-    # Go through a bunch of cases
-    for use_multiprocessing in [True, False]:
-        for fixed_orientations in [True, False]:
-            for use_volume in [False]:
-
-                #Run
-                op=OptimizationParameters()
-                op.desired_coverage = 85
-                op.number_of_orientations = 4
-                op.mutation_rate = 0.02
-                op.crossover_rate = 0.1
-                op.pre_mutation_rate = 1.5
-                op.use_symmetry = False
-                op.max_generations = 5
-                op.population = 10
-                op.use_multiprocessing = use_multiprocessing
-                op.use_volume = use_volume
-
-                op.fixed_orientations = fixed_orientations
-                op.use_old_population = False
-
-                (ga, a1, a2) = run_optimization( op, print_pop)
+#    experiment.exp = experiment.Experiment(instrument.inst)
+#    exp = experiment.exp
+#    exp.initialize_reflections()
+#    exp.verbose = False
 
 
-                if True:
-                    #Keep going!
-                    op.use_old_population = True
-                    op.add_trait("old_population", ga.getPopulation())
-                    op.population = 10
-                    op.number_of_orientations = 4
-                    (ga, a1, a2) = run_optimization( op, print_pop)
+#    # Go through a bunch of cases
+#    for use_multiprocessing in [True, False]:
+#        for fixed_orientations in [True, False]:
+#            for use_volume in [False]:
 
-                    #Keep going, changing pop size
-                    op.use_old_population = True
-                    op.add_trait("old_population", ga.getPopulation())
-                    op.population = 12
-                    op.number_of_orientations = 4
-                    (ga, a1, a2) = run_optimization( op, print_pop)
+#                #Run
+#                op=OptimizationParameters()
+#                op.desired_coverage = 85
+#                op.number_of_orientations = 4
+#                op.mutation_rate = 0.02
+#                op.crossover_rate = 0.1
+#                op.pre_mutation_rate = 1.5
+#                op.use_symmetry = False
+#                op.max_generations = 5
+#                op.population = 10
+#                op.use_multiprocessing = use_multiprocessing
+#                op.use_volume = use_volume
 
-                    # Change the number of orientations?
-                    op.use_old_population = True
-                    op.add_trait("old_population", ga.getPopulation())
-                    op.population = 12
-                    op.number_of_orientations = 6
-                    (ga, a1, a2) = run_optimization( op, print_pop)
+#                op.fixed_orientations = fixed_orientations
+#                op.use_old_population = False
+
+#                (ga, a1, a2) = run_optimization( op, print_pop)
 
 
-                print "----------best-----------", ga.bestIndividual()
-                print "best coverage = ", ga.bestIndividual().coverage
+#                if True:
+#                    #Keep going!
+#                    op.use_old_population = True
+#                    op.add_trait("old_population", ga.getPopulation())
+#                    op.population = 10
+#                    op.number_of_orientations = 4
+#                    (ga, a1, a2) = run_optimization( op, print_pop)
+
+#                    #Keep going, changing pop size
+#                    op.use_old_population = True
+#                    op.add_trait("old_population", ga.getPopulation())
+#                    op.population = 12
+#                    op.number_of_orientations = 4
+#                    (ga, a1, a2) = run_optimization( op, print_pop)
+
+#                    # Change the number of orientations?
+#                    op.use_old_population = True
+#                    op.add_trait("old_population", ga.getPopulation())
+#                    op.population = 12
+#                    op.number_of_orientations = 6
+#                    (ga, a1, a2) = run_optimization( op, print_pop)
+
+
+#                print "----------best-----------", ga.bestIndividual()
+#                print "best coverage = ", ga.bestIndividual().coverage
 
 

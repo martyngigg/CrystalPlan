@@ -532,16 +532,17 @@ class Experiment:
     #========================================================================================================
     def __getstate__(self):
         """Return a dictionary containing all the stuff to pickle in an experiment."""
-        #Exclude all these attributes.
-        exclude_list = ['reflections', 'reflections_dict', 'reflections_q_vector',
-        'reflections_times_measured', 'reflections_times_measured_with_equivalents',
-        'reflections_times_real_measured', 'reflections_times_real_measured_with_equivalents',
-        'reflections_hkl', 'reflections_mask', 'primary_reflections_mask',
-        'qspace', 'qspace_displayed', 'volume_symmetry',
-        'coverage_stats', 'reflection_stats',
-        'reflection_stats_with_symmetry', 'reflection_stats_adjusted', 'reflection_stats_adjusted_with_symmetry',
-        'reflection_masked_index_to_real_index', 'reflections_q_norm'
-        ]
+        # Exclude all these attributes.
+        # exclude_list = ['reflections', 'reflections_dict', 'reflections_q_vector',
+        #  'reflections_times_measured', 'reflections_times_measured_with_equivalents',
+        #  'reflections_times_real_measured', 'reflections_times_real_measured_with_equivalents',
+        #  'reflections_hkl', 'reflections_mask', 'primary_reflections_mask',
+        #  'qspace', 'qspace_displayed', 'volume_symmetry',
+        #  'coverage_stats', 'reflection_stats',
+        #  'reflection_stats_with_symmetry', 'reflection_stats_adjusted', 'reflection_stats_adjusted_with_symmetry',
+        #  'reflection_masked_index_to_real_index', 'reflections_q_norm'
+        #  ]
+        exclude_list = []
         d =  utils.getstate_except(self, exclude_list)
         return d
 
@@ -553,10 +554,10 @@ class Experiment:
             setattr(self, key, value)
         #Ok, now fix everything
         # self.inst should be good though, its own setstate does it.
-        self.initialize_reflections()
-        self.recalculate_reflections(None, calculation_callback=None)
-        self.initialize_volume_symmetry_map()
-        self.calculate_coverage(None, None)
+        # self.initialize_reflections()
+        # self.recalculate_reflections(None, calculation_callback=None)
+        # self.initialize_volume_symmetry_map()
+        # self.calculate_coverage(None, None)
 
 
     #-------------------------------------------------------------------------------
