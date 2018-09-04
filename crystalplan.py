@@ -13,7 +13,17 @@ Version: $Id$
 # Version: $Id$
 
 #Simply import and launch the GUI
+from traits.etsconfig.api import ETSConfig
+ETSConfig.toolkit = 'wx'
+
+import vtk
+errOut = vtk.vtkFileOutputWindow()
+errOut.SetFileName("VTK Error Out.txt")
+vtkStdErrOut = vtk.vtkOutputWindow()
+vtkStdErrOut.SetInstance(errOut)
+
 import gui.main
 import multiprocessing
 multiprocessing.freeze_support()
+
 gui.main.handle_arguments_and_launch(InstalledVersion=True)
