@@ -55,7 +55,9 @@ class FunctionCall:
 def send_message(message_id, **kwargs):
     """Thread-safe replacement for pubsub sendMessage."""
     print message_id, kwargs
-    wx.CallAfter(pub.sendMessage, message_id, **kwargs)
+    app = wx.GetApp()
+    if app is not None:
+        wx.CallAfter(pub.sendMessage, message_id, **kwargs)
 
 #----------------------------------------------------------------------
 def send_message_optional(object, message_id, **kwargs):
@@ -67,6 +69,10 @@ def send_message_optional(object, message_id, **kwargs):
         data: any data object.
         delay: in seconds, the closest in time two messages will be sent to the same object.
     """
+    app = wx.GetApp()   
+    if app is None:
+        return
+        
     delay = kwargs.pop('delay', 0.33)
     if not hasattr(object, '_last_message_send_time') or (time.time()-object._last_message_send_time > delay):
         wx.CallAfter(pub.sendMessage, message_id, **kwargs)

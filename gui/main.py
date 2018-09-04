@@ -8,8 +8,6 @@ Includes GUI launcher, logger, error handler."""
 
 #--- General Imports ---
 from __future__ import with_statement
-from traits.etsconfig.api import ETSConfig
-ETSConfig.toolkit = 'wx'
 import sys
 import os
 import os.path
@@ -143,11 +141,14 @@ def launch_gui(inelastic, hb3a):
     import display_thread
     import wx
     import model
+    import tempfile
 
 
     #Create a StdOut wrapper
     global out_wrapper
-    out_wrapper = OutWrapper(sys.stdout, r'/tmp/CrystalPlan_Log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt" )
+    output_file_name = 'CrystalPlan_Log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt"
+    output_file_name = os.path.join(tempfile.gettempdir(), output_file_name) 
+    out_wrapper = OutWrapper(sys.stdout, output_file_name)
     sys.stdout = out_wrapper
 
     #Attach our exception hook

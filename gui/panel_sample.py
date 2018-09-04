@@ -269,12 +269,12 @@ class PanelSample(wx.Panel):
         self.range_settings.set_in_exp(model.experiment.exp)
 
         #Make a progress bar
-        self.count = 4
-        max = len(model.instrument.inst.positions)+2 #Steps in calculation
+        self.count = 0
+        num_steps = len(model.instrument.inst.positions)+2 #Steps in calculation
         self.prog_dlg = wx.ProgressDialog( "Reflection Calculation Progress",        "Initializing reflections for sample.              ",
-            max, style = wx.PD_CAN_ABORT | wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
+            num_steps, style = wx.PD_CAN_ABORT | wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
                          wx.PD_ESTIMATED_TIME | wx.PD_REMAINING_TIME | wx.PD_AUTO_HIDE)
-        self.prog_dlg.Update(self.count)
+        self.prog_dlg.Update(num_steps)
 
         #Initialize the peaks here.
         model.experiment.exp.initialize_reflections()

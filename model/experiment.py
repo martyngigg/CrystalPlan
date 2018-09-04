@@ -906,6 +906,7 @@ class Experiment:
         for (peak_num, refl) in enumerate(self.reflections):
             if refl.is_primary:
                 primary[peak_num] = True
+        
         print "Primary peaks: ", sum(primary), "out of", len(self.reflections), "peaks. Found in %.3f sec." % (time.time()-t1)
         if verbose: print [refl.hkl for refl in self.reflections if refl.primary]
 
@@ -963,7 +964,6 @@ class Experiment:
                 Will be used by GUI to update.
                 Function must expect one parameter, a PositionCoverage object.
         """
-
         refls = self.reflections #for minor speed-up
         if refls is None:
             #No points defined yet
