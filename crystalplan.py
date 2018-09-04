@@ -14,4 +14,6 @@ Version: $Id$
 
 #Simply import and launch the GUI
 import gui.main
+import multiprocessing
+multiprocessing.freeze_support()
 gui.main.handle_arguments_and_launch(InstalledVersion=True)
