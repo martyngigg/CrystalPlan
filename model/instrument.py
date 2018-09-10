@@ -251,21 +251,20 @@ class Instrument:
 
         #Things to NOT load; fix old files.
         exclude_list = ['qlim']
-
         for (key, value) in d.items():
             if not (key in exclude_list):
                 setattr(self, key, value)
 
-        #Fix the goniometer
+        # #Fix the goniometer
         self.set_goniometer(self.goniometer)
 
-        #Now, re-load the detectors
-        #TODO: Check that the file still exists!
+        # #Now, re-load the detectors
+        # #TODO: Check that the file still exists!
         if not self.detector_filename is None:
             self.load_detectors_file(self.detector_filename)
-        #Generate your q-space stuff
+        # #Generate your q-space stuff
         self.make_qspace()
-        #Re-calculate all the positions (with all detectors enabled)
+        # #Re-calculate all the positions (with all detectors enabled)
         for poscov in self.positions: #@type poscov PositionCoverage
             poscov.coverage = self.calculate_coverage(self.detectors, poscov.angles, poscov.sample_U_matrix, use_inline_c=True)
 
@@ -328,7 +327,6 @@ class Instrument:
             # Skip other comment rows
             lines = filter(lambda line: len(line) > 0 and "#" not in line[0], list(reader))
 
-            print lines
             count = 1
             for row in lines:
                 if cylindrical:

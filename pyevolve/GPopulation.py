@@ -162,7 +162,7 @@ class GPopulation:
       self.stats   = Statistics()
 
    #---------------------------------------------------------------------------------
-   def setMultiProcessing(self, flag=True, full_copy=False, number_of_processes=None):
+   def setMultiProcessing(self, flag=True, full_copy=False, number_of_processes=None, initializer=None):
         """ Sets the flag to enable/disable the use of python multiprocessing module.
         Use this option when you have more than one core on your CPU and when your
         evaluation function is very slow.
@@ -180,7 +180,7 @@ class GPopulation:
         """
         #Save the parameters
         old_settings = self.multiProcessing
-        self.multiProcessing = (flag, full_copy, number_of_processes)
+        self.multiProcessing = (flag, full_copy, number_of_processes, initializer)
         #Re-initialize if anything changed.
         if (old_settings != self.multiProcessing):
             self.initializeMultiProcessing()
@@ -196,11 +196,11 @@ class GPopulation:
             #Create the process pool with the # of processes
             num_proc = self.multiProcessing[2]
             if num_proc is None:
-                self.proc_pool = Pool()
+                self.proc_pool = Pool(initializer=self.multiProcessing[3])
             elif num_proc > 0:
-                self.proc_pool = Pool(processes=num_proc)
+                self.proc_pool = Pool(processes=num_proc, initializer=self.multiProcessing[3])
             else:
-                self.proc_pool = Pool()
+                self.proc_pool = Pool(initializer=self.multiProcessing[3])
             print "Multiprocessing initialized in %03.3f sec; will use %d processors." % ( (time.time()-t1), num_proc )
 
    #---------------------------------------------------------------------------------

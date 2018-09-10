@@ -8,11 +8,14 @@
 import numpy as np
 import random
 import copy
+import platform
+from functools import partial
 
 #--- Model Imports ----
-import instrument
-import experiment
-import goniometer
+import model.instrument
+import model.experiment
+import model.goniometer
+from model.instrument import PositionCoverage
 
 import pyevolve
 from pyevolve import G1DList
@@ -25,14 +28,10 @@ from pyevolve import Statistics
 from pyevolve import DBAdapters
 from pyevolve import Initializators
 
-
-
 #--- Traits Imports ---
 from traits.api import HasTraits,Int,Float,Str,Property,Bool, List
 from traitsui.api import View,Item,Label,Heading, Spring, Handler, Group
 from traitsui.menu import OKButton, CancelButton
-from model.instrument import PositionCoverage
-
 
 # ===========================================================================================
 # ===========================================================================================
@@ -59,11 +58,11 @@ class OptimizationParameters(HasTraits):
     nudge_amount = Float(5.0, label='Nudge amount (%)', desc='the width of the normal distribution of nudging that will be done on the angles, as a percentage of the allowable range.')
     crossover_rate = Float(0.01, desc="the probability of cross-over.")
     use_multiprocessing = Bool(True, desc="to use multiprocessing (multiple processors) to speed up calculation.")
+
     number_of_processors = Int(10, desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available. Try to keep your population = a multiple of the # of processors.")
     use_old_population = Bool(False)
     elitism = Bool(True, desc="to use elitism, which means to keep the best individuals from the previous generation.")
     elitism_replacement = Int(1, desc="the Elitism replacement number - how many of the best individuals from the previous generation to keep.")
-
 
     view = View(
         Group(
@@ -115,7 +114,7 @@ class GeneAngles(object):
 
     #---------------------------------------------------------------
     def __str__(self):
-        instr = instrument.inst
+        instr = model.instrument.inst
         return "(%s)" % ", ".join([ai.pretty_print(value, True) for (ai, value) in zip(instr.angles, self.angles)])
 
     #---------------------------------------------------------------
@@ -125,7 +124,7 @@ class GeneAngles(object):
     #---------------------------------------------------------------
     def mutate(self):
         """Mutate (randomize) the angles."""
-        instr = instrument.inst
+        instr = model.instrument.inst
         #Match the # of angle
         self.angles = []
         #@type ai AngleInfo
@@ -138,7 +137,7 @@ class GeneAngles(object):
         """Randomly nudge the position by the provided amount (in % of the allowable range)"""
         if percent <= 0: return
         for i in xrange(len(self.angles)):
-            angle_info = instrument.inst.angles[i] #@type angle_info AngleInfo
+            angle_info = model.instrument.inst.angles[i] #@type angle_info AngleInfo
             max = angle_info.random_range[1]
             min = angle_info.random_range[0]
             amount = (max - min) * percent / 100.0
@@ -230,7 +229,7 @@ def ChromosomeInitializatorUseOldPopulation(genome, **args):
     old_pop = genome.getParam("old_population")
     old_pop_ID = genome.getParam("old_population_ID")
     old_individual = Selectors.GRouletteWheel(old_pop, popID=old_pop_ID)
-    if len(old_individual[0].angles) != len(instrument.inst.angles):
+    if len(old_individual[0].angles) != len(model.instrument.inst.angles):
         print "The number of angles in the goniometer has changed, so copying the population is impossible. Re-starting from scratch."
         #We create a random one
         genome.randomize()
@@ -364,8 +363,8 @@ def get_angles(genome):
     """Extract the list of lists of angles from the genome; for use by eval_func"""
     global op #@type op OptimizationParameters
     #@type instr Instrument
-    instr = instrument.inst
-    exp = experiment.exp
+    instr = model.instrument.inst
+    exp = model.experiment.exp
     
     num_positions = len(genome)
     umatrix = exp.crystal.get_u_matrix()
@@ -378,7 +377,7 @@ def get_angles(genome):
         angles = genome[i].angles
         #Only add it if the angles are allowed.
         if instr.goniometer.are_angles_allowed(angles):
-            positions.append(  instrument.PositionCoverage(angles, coverage=None, sample_U_matrix=umatrix) )
+            positions.append(model.instrument.PositionCoverage(angles, coverage=None, sample_U_matrix=umatrix) )
         else:
             positions.append( None )
 
@@ -398,7 +397,7 @@ def eval_func(genome, verbose=False):
         all_positions += op.fixed_orientations_list
 
     #@type exp Experiment
-    exp = experiment.exp
+    exp = model.experiment.exp
     #Calculate (this calculates the stats)
     exp.recalculate_reflections(all_positions, calculation_callback=None)
     #Calculate the stats with edge avoidance if an option
@@ -484,7 +483,7 @@ def eval_func_volume(genome, verbose=False):
     This one uses the volume coverage."""
     global op #@type op OptimizationParameters
     #@type instr Instrument
-    instr = instrument.inst
+    instr = model.instrument.inst
     instr.verbose = False
 
     positions = get_angles(genome)
@@ -503,21 +502,21 @@ def eval_func_volume(genome, verbose=False):
         pd[id(new_poscov)] = True
 
     #@type exp Experiment
-    exp = experiment.exp
+    exp = model.experiment.exp
 
     #Set all the parameters for evaluation
     #Don't add a trial position
-    exp.params[experiment.PARAM_TRY_POSITION] = None
+    exp.params[model.experiment.PARAM_TRY_POSITION] = None
     #Using symmetry is an option when starting optimization.
-    exp.params[experiment.PARAM_SYMMETRY] = experiment.ParamSymmetry(op.use_symmetry)
+    exp.params[model.experiment.PARAM_SYMMETRY] = model.experiment.ParamSymmetry(op.use_symmetry)
     #All detectors
-    exp.params[experiment.PARAM_DETECTORS] = experiment.ParamDetectors([True]*len(instr.detectors))
+    exp.params[model.experiment.PARAM_DETECTORS] = model.experiment.ParamDetectors([True]*len(instr.detectors))
     #All positions
-    exp.params[experiment.PARAM_POSITIONS] = experiment.ParamPositions(pd)
+    exp.params[model.experiment.PARAM_POSITIONS] = model.experiment.ParamPositions(pd)
     #Don't invert
-    exp.params[experiment.PARAM_INVERT] = None
+    exp.params[model.experiment.PARAM_INVERT] = None
     #Don't slice
-    exp.params[experiment.PARAM_SLICE] = None
+    exp.params[model.experiment.PARAM_SLICE] = None
 
     #Calculate (this calculates the stats)
     exp.calculate_coverage(None, None)
@@ -553,8 +552,15 @@ def termination_func(ga_engine):
     best_score = ga_engine.bestIndividual().score
     #When you reach the desired coverage (in %) you are done.
     return best_score * 100.0 >= op.desired_coverage
-    
 
+#-----------------------------------------------------------------------------------------------
+def init_pool(params, instr, expr):
+    global op
+    op = params
+    model.instrument.inst = instr
+    model.experiment.exp = expr
+    import multiprocessing
+    print(multiprocessing.current_process().name)
 
 #-----------------------------------------------------------------------------------------------
 def set_changeable_parameters(optim_params, ga):
@@ -571,7 +577,13 @@ def set_changeable_parameters(optim_params, ga):
     if optim_params.pre_mutation_rate >= 0: ga.setPreMutationRate(optim_params.pre_mutation_rate)
     if optim_params.crossover_rate >= 0: ga.setCrossoverRate(optim_params.crossover_rate)
     #Set the multiprocessing. full_copy=True because we change the individual!
-    ga.setMultiProcessing(optim_params.use_multiprocessing, full_copy=True, number_of_processes=optim_params.number_of_processors)
+    
+    initializer = None
+    if platform.system() == "Windows":
+        initializer = partial(init_pool, optim_params, model.instrument.inst, model.experiment.exp) 
+
+    ga.setMultiProcessing(optim_params.use_multiprocessing, full_copy=True, number_of_processes=optim_params.number_of_processors,
+                          initializer=initializer)
     if optim_params.max_generations > 0: ga.setGenerations(optim_params.max_generations)
     ga.setElitism(optim_params.elitism)
     if optim_params.elitism_replacement > 0: ga.setElitismReplacement(optim_params.elitism_replacement)
@@ -591,8 +603,8 @@ def run_optimization(optim_params, step_callback=None):
     op = optim_params
 
     #The instrument to use
-    instr = instrument.inst
-    exp = experiment.exp
+    instr = model.instrument.inst
+    exp = model.experiment.exp
     exp.verbose = False
 
     # Genome instance, list of list of angles
@@ -631,8 +643,10 @@ def run_optimization(optim_params, step_callback=None):
 
     # The evaluator function (evaluation function)
     if op.use_volume:
+        print("Volume Opt")
         genome.evaluator.set(eval_func_volume)
     else:
+        print("Ref Opt")
         genome.evaluator.set(eval_func)
 
     # Genetic Algorithm Instance

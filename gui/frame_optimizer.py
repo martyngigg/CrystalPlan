@@ -12,8 +12,10 @@ import time
 import threading
 
 import matplotlib
-matplotlib.interactive( True )
-matplotlib.use( 'WXAgg' )
+
+if __name__ == "__main__":
+    matplotlib.interactive( True )
+    matplotlib.use( 'WXAgg' )
 
 #--- GUI Imports ----
 import display_thread
@@ -22,6 +24,7 @@ import gui_utils
 #--- Model Imports ----
 import model
 from model.optimization import OptimizationParameters
+from model.optimization_thread import OptimizationThread
 import CrystalPlan_version
 
 if __name__=="__main__":
@@ -146,32 +149,6 @@ class GAData():
         self.best = best
         self.average = average
         self.worst = worst
-
-
-#================================================================================================
-#================================================================================================
-class OptimizationThread(threading.Thread):
-    """Thread to run the GA optimization."""
-    def __init__ (self, controller):
-        threading.Thread.__init__(self)
-        self.controller = controller
-        self.start() #Start on creation
-
-    def run(self):
-        #Just run the optimization
-        self.controller.params.optimization_running = True
-        try:
-            (ga, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
-            self.controller.params.optimization_running = False
-            #Call the completion function.
-            self.controller.complete( ga, aborted, converged )
-        except Exception as inst:
-            print "Error while running optimization"
-            print inst
-            self.controller.restore_buttons()
-        finally:
-            self.controller.params.optimization_running = False
-
 
 #================================================================================================
 #================================================================================================
@@ -384,7 +361,7 @@ class OptimizerController():
         self.add_data(ga)
 
         #Adjust settings while going on
-        model.optimization.set_changeable_parameters(op, ga)
+        # model.optimization.set_changeable_parameters(op, ga)
 
         #Update gui
         if time.time()-self.last_plot_time > self.plot_time_interval:

@@ -9,21 +9,18 @@ by which detectors and at what wavelengths.
 Author: Janik Zikovsky, zikovskyjl@ornl.gov
 Version: $Id$
 """
-# Author: Janik Zikovsky, zikovskyjl@ornl.gov
-# Version: $Id$
 
-#Simply import and launch the GUI
-from traits.etsconfig.api import ETSConfig
-ETSConfig.toolkit = 'wx'
+if __name__ == "__main__":
+    from traits.etsconfig.api import ETSConfig
+    ETSConfig.toolkit = 'wx'
 
-import vtk
-errOut = vtk.vtkFileOutputWindow()
-errOut.SetFileName("VTK Error Out.txt")
-vtkStdErrOut = vtk.vtkOutputWindow()
-vtkStdErrOut.SetInstance(errOut)
+    import vtk
+    errOut = vtk.vtkFileOutputWindow()
+    errOut.SetFileName("VTK Error Out.txt")
+    vtkStdErrOut = vtk.vtkOutputWindow()
+    vtkStdErrOut.SetInstance(errOut)
 
-import gui.main
-import multiprocessing
-multiprocessing.freeze_support()
-
-gui.main.handle_arguments_and_launch(InstalledVersion=True)
+    import gui.main
+    # import multiprocessing
+    # multiprocessing.freeze_support()
+    gui.main.handle_arguments_and_launch(InstalledVersion=True)

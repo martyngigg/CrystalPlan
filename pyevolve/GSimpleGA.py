@@ -382,7 +382,7 @@ class GSimpleGA:
       ret+="\n"
       return ret
    
-   def setMultiProcessing(self, flag=True, full_copy=False, number_of_processes=-1):
+   def setMultiProcessing(self, flag=True, full_copy=False, number_of_processes=-1, initializer=None):
       """ Sets the flag to enable/disable the use of python multiprocessing module.
       Use this option when you have more than one core on your CPU and when your
       evaluation function is very slow.
@@ -424,7 +424,7 @@ class GSimpleGA:
       if type(full_copy) != BooleanType:
          Util.raiseException("Multiprocessing 'full_copy' option must be True or False", TypeError)
 
-      self.internalPop.setMultiProcessing(flag, full_copy, number_of_processes)
+      self.internalPop.setMultiProcessing(flag, full_copy, number_of_processes, initializer=initializer)
 
    def setMigrationAdapter(self, migration_adapter=None):
       """ Sets the Migration Adapter
