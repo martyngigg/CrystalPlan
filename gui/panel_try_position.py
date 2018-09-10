@@ -23,11 +23,11 @@ import model
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-[wxID_PANELTRYPOSITION, wxID_PANELTRYPOSITIONBUTTONSAVE, 
- wxID_PANELTRYPOSITIONCHECKADD, wxID_PANELTRYPOSITIONSTATICLINETOP, 
- wxID_PANELTRYPOSITIONSTATICTEXT1, wxID_PANELTRYPOSITIONSTATICTEXTHELP, 
- wxID_PANELTRYPOSITIONSTATICTEXTWARNING, 
- wxID_PANELTRYPOSITIONSTATICTEXTWARNINGREASON, 
+[wxID_PANELTRYPOSITION, wxID_PANELTRYPOSITIONBUTTONSAVE,
+ wxID_PANELTRYPOSITIONCHECKADD, wxID_PANELTRYPOSITIONSTATICLINETOP,
+ wxID_PANELTRYPOSITIONSTATICTEXT1, wxID_PANELTRYPOSITIONSTATICTEXTHELP,
+ wxID_PANELTRYPOSITIONSTATICTEXTWARNING,
+ wxID_PANELTRYPOSITIONSTATICTEXTWARNINGREASON,
 ] = [wx.NewId() for _init_ctrls in range(8)]
 
 #-------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ class TryPositionController:
             self.panel.boxSizerSliders.Clear()
             for slid in self.panel.sliders:
                 slid.Destroy()
-                
+
         #Create all the sliders
         sliders = list()
         #Get the list of angles in this instrument.
@@ -88,8 +88,8 @@ class TryPositionController:
             slid.Bind(EVT_VALUE_SLIDER_CHANGING, self.SliderChanging)
             sliders.append(slid)
             #Add to the sizer
-            self.panel.boxSizerSliders.AddWindow(slid, 0, border=0, flag=wx.EXPAND)
-            self.panel.boxSizerSliders.AddSpacer(wx.Size(12, 12), border=0, flag=wx.EXPAND)
+            self.panel.boxSizerSliders.Add(slid, 0, border=0, flag=wx.EXPAND)
+            self.panel.boxSizerSliders.Add(wx.Size(12, 12), border=0, flag=wx.EXPAND)
         self.panel.boxSizerSliders.Layout()
         self.panel.boxSizerAll.Layout()
         #Save to panel
@@ -150,7 +150,7 @@ class TryPositionController:
         """Send out a command to re-do the trial addition."""
         #Create a PositionCoverage with empty qspace - means it needs to be recalculated.
         try_position = model.instrument.PositionCoverage(self.angles, None, model.experiment.exp.crystal.get_u_matrix())
-        
+
         #Get the old try_position
         old = display_thread.get_try_position()
         if not old is None:
@@ -160,11 +160,11 @@ class TryPositionController:
                     np.allclose(model.experiment.exp.crystal.get_u_matrix(), old.try_position.sample_U_matrix):
                         #Re-use the qspace array, if it is in there.
                         try_position = model.instrument.PositionCoverage(self.angles, old.try_position.coverage, old.try_position.sample_U_matrix)
-                
+
         #This is the try parameter
         attempt = model.experiment.ParamTryPosition(try_position, self.add_position)
         display_thread.NextParams[model.experiment.PARAM_TRY_POSITION] = attempt
-        
+
 
     #-------------------------------------------------------------------------------
     def add_to_list(self):
@@ -187,7 +187,7 @@ class TryPositionController:
                         model.messages.send_message(model.messages.MSG_POSITION_LIST_CHANGED)
                         #and we're done
                         return
-                    
+
         #If we reach here, something was missing
         wx.MessageDialog(None, "Sorry! There was a problem adding this sample orientation to the main list. Make sure it has been calculated and is shown in the coverage view before clicking this button.", 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
 
@@ -200,18 +200,18 @@ class PanelTryPosition(wx.Panel):
     def _init_coll_boxSizerAll_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddWindow(self.staticTextHelp, 0, border=0, flag=wx.EXPAND|wx.SHRINK)
-        parent.AddWindow(self.staticLineTop, 0, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.checkAdd, 0, border=0, flag=0)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=wx.EXPAND)
-        parent.AddSizer(self.boxSizerSliders, border=0, flag=wx.EXPAND)
-        parent.AddWindow(self.staticTextWarning, 0, border=4,
+        parent.Add(self.staticTextHelp, 0, border=0, flag=wx.EXPAND|wx.SHRINK)
+        parent.Add(self.staticLineTop, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.checkAdd, 0, border=0, flag=0)
+        parent.Add(wx.Size(8, 8), border=0, flag=wx.EXPAND)
+        parent.Add(self.boxSizerSliders, border=0, flag=wx.EXPAND)
+        parent.Add(self.staticTextWarning, 0, border=4,
               flag=wx.RIGHT | wx.LEFT | wx.EXPAND)
-        parent.AddWindow(self.staticTextWarningReason, 0, border=16,
+        parent.Add(self.staticTextWarningReason, 0, border=16,
               flag=wx.RIGHT | wx.LEFT | wx.EXPAND)
-        parent.AddSpacer(wx.Size(16, 16), border=0, flag=wx.EXPAND)
-        parent.AddWindow(self.buttonSave, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(16, 16), border=0, flag=wx.EXPAND)
+        parent.Add(self.buttonSave, 0, border=0, flag=wx.EXPAND)
 
     def _init_sizers(self):
         # generated method, don't edit

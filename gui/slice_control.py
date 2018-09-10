@@ -389,12 +389,12 @@ class SliceControl(wx.PyControl):
             #Go along the horizontal (x) axis
             dc.DrawLine( px, py, px, py+tick+1)
             dc.DrawLabel(label,
-                wx.Rect( px, py+tick+1),
+                wx.Rect( px, py, px, py+tick+1),
                 alignment=wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP )
         else:
             dc.DrawLine( px, py, px-tick-1, py)
             dc.DrawLabel(label,
-                wx.Rect( self.GetX(x)-tick-1, self.GetY(y)),
+                wx.Rect( px, py, self.GetX(x)-tick-1, self.GetY(y)),
                 alignment=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
 
 
@@ -491,7 +491,7 @@ class SliceControl(wx.PyControl):
         #--- Vertical Axis ----
         self.DrawTick(dc, self.data_x[0], 0, '0', horizontal=False)
         self.DrawTick(dc, self.data_x[0], yrange, ("%d" % np.round(yrange)), horizontal=False)
-        dc.DrawLabel('%' , wx.Rect( self.GetX(self.data_x[0])-2, self.GetY(yrange/2)), alignment=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
+        dc.DrawLabel('%' , wx.Rect(0, 0, self.GetX(self.data_x[0])-2, self.GetY(yrange/2)), alignment=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
 
         steps = 1
         steps = int( 1.0+ xrange * 1. / (self.plot_width/40) ) #Around 40 pixel between ticks
@@ -524,7 +524,7 @@ class SliceControl(wx.PyControl):
                 for x_label in range(0, int(xrange+1), steps):
                     self.DrawTick(dc, x_label, 0, ("%d" % x_label), horizontal=True)
                 #Label
-                dc.DrawLabel('q' , wx.Rect( 2, height), alignment=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM )
+                dc.DrawLabel('q' , wx.Rect(0, 0, 2, height), alignment=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM )
 
 
 ##        dc.DrawText( ("%d" % np.round(yrange)) , self.GetX(0), self.GetY(yrange))

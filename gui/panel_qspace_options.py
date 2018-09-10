@@ -106,30 +106,29 @@ class PanelQspaceOptions(wx.Panel):
     def _init_coll_boxSizerSliceOptions_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddWindow(self.checkShowSlice, 0, border=4, flag=wx.LEFT)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.checkInvert, 0, border=0, flag=0)
-        parent.AddStretchSpacer(1)
-        parent.AddWindow(self.checkRealtimeSlice, 0, border=0, flag=0)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.checkShowSlice, 0, border=4, flag=wx.LEFT)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.checkInvert, 0, border=0, flag=0)
+        parent.Add(self.checkRealtimeSlice, 0, border=0, flag=0)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
 
     def _init_coll_boxSizerAll_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddSizer(self.boxSizerTop, 0, border=0, flag=0)
-        parent.AddSpacer(wx.Size(3,3), border=0, flag=0)
-        parent.AddSizer(self.boxSizerSliceOptions, 0, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(4,4), border=0, flag=0)
-        parent.AddWindow(self.panel_to_hold_slice_control, 1, border=4,
+        parent.Add(self.boxSizerTop, 0, border=0, flag=0)
+        parent.Add(wx.Size(3,3), border=0, flag=0)
+        parent.Add(self.boxSizerSliceOptions, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(4,4), border=0, flag=0)
+        parent.Add(self.panel_to_hold_slice_control, 1, border=4,
               flag=wx.BOTTOM | wx.RIGHT | wx.LEFT | wx.EXPAND)
 
     def _init_coll_boxSizerTop_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddWindow(self.checkSymmetry, 0, border=4,
+        parent.Add(self.checkSymmetry, 0, border=4,
               flag=wx.LEFT | wx.RIGHT)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.checkShowRedundancy, 0, border=0, flag=0)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.checkShowRedundancy, 0, border=0, flag=0)
 
     def _init_sizers(self):
         # generated method, don't edit
@@ -157,7 +156,7 @@ class PanelQspaceOptions(wx.Panel):
         self.panel_to_hold_slice_control = wx.Panel(id=wxID_PanelQspaceOptionsPANEL_TO_HOLD_SLICE_CONTROL,
               name=u'panel_to_hold_slice_control', parent=self, pos=wx.Point(4,
               53), size=wx.Size(718, 151),
-              style=wx.RAISED_BORDER | wx.THICK_FRAME | wx.TAB_TRAVERSAL)
+              style=wx.RAISED_BORDER | wx.RESIZE_BORDER | wx.TAB_TRAVERSAL)
 
         self.checkShowSlice = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKSHOWSLICE,
               label=u'Show a slice in q', name=u'checkShowSlice', parent=self,

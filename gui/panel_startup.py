@@ -210,38 +210,38 @@ class PanelStartup(wx.Panel):
     def _init_coll_boxSizerList_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
-        parent.AddWindow(self.listInstruments, 2, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
+        parent.Add(wx.Size(16, 8), border=0, flag=0)
+        parent.Add(self.listInstruments, 2, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(16, 8), border=0, flag=0)
 
     def _init_coll_boxSizerButtons_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
-        parent.AddWindow(self.buttonApply, 0, border=0, flag=0)
-        parent.AddWindow(self.staticTextSpacer1, 1, border=0, flag=0)
-        parent.AddWindow(self.buttonQuit, 0, border=0, flag=0)
-        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
+        parent.Add(wx.Size(16, 8), border=0, flag=0)
+        parent.Add(self.buttonApply, 0, border=0, flag=0)
+        parent.Add(self.staticTextSpacer1, 1, border=0, flag=0)
+        parent.Add(self.buttonQuit, 0, border=0, flag=0)
+        parent.Add(wx.Size(16, 8), border=0, flag=0)
 
     def _init_coll_boxSizerAll_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.staticTextHelp, 0, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.staticTextSelect, 0, border=0, flag=wx.EXPAND)
-        parent.AddSizer(self.boxSizerList, 0, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(24, 8), border=0, flag=0)
-        parent.AddWindow(self.staticLine1, 0, border=0, flag=wx.EXPAND)
-        parent.AddSizer(self.boxSizerParams, 1, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.staticTextSpaceWarning, 0, border=0,
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.staticTextHelp, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.staticTextSelect, 0, border=0, flag=wx.EXPAND)
+        parent.Add(self.boxSizerList, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(24, 8), border=0, flag=0)
+        parent.Add(self.staticLine1, 0, border=0, flag=wx.EXPAND)
+        parent.Add(self.boxSizerParams, 1, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.staticTextSpaceWarning, 0, border=0,
               flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.staticLine2, 0, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddSizer(self.boxSizerButtons, 0, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.staticLine2, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.Add(self.boxSizerButtons, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(8, 8), border=0, flag=0)
 
     def _init_sizers(self):
         # generated method, don't edit
@@ -336,7 +336,7 @@ class PanelStartup(wx.Panel):
 
         self.handler = StartupTraitsHandler(self)
         panel = wx.Window(self)
-        self.boxSizerParams.AddWindow(panel, 3, border=1, flag=wx.EXPAND)
+        self.boxSizerParams.Add(panel, 3, border=1, flag=wx.EXPAND)
         self.control = self.params.edit_traits(parent=panel, kind='subpanel', handler=self.handler).control
         #Make a copy for comparison
         self.original_params = copy.copy(self.params)

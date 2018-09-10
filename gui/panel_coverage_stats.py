@@ -16,16 +16,16 @@ class PanelCoverageStats(wx.Panel):
     """
 
     def _init_coll_boxSizerStats_Items(self, parent):
-        parent.AddWindow(self.staticTextStats1, 0, border=0,
+        parent.Add(self.staticTextStats1, 0, border=0,
               flag=wx.ALIGN_CENTER)
-        parent.AddSpacer(wx.Size(8,8))
-        parent.AddWindow(self.staticTextReflections,0, border=8, flag=wx.EXPAND | wx.BOTTOM)
-        parent.AddWindow(self.staticTextStatsCovered, 0, border=0,
+        parent.Add(wx.Size(8,8))
+        parent.Add(self.staticTextReflections,0, border=8, flag=wx.EXPAND | wx.BOTTOM)
+        parent.Add(self.staticTextStatsCovered, 0, border=0,
               flag=wx.EXPAND)
-        parent.AddWindow(self.gaugeCoverage, 0, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(8,8))
-        parent.AddWindow(self.staticTextStatsRedundant, 0, border=0, flag=wx.EXPAND)
-        parent.AddWindow(self.gaugeRedundancy, 0, border=0, flag=wx.EXPAND)
+        parent.Add(self.gaugeCoverage, 0, border=0, flag=wx.EXPAND)
+        parent.Add(wx.Size(8,8))
+        parent.Add(self.staticTextStatsRedundant, 0, border=0, flag=wx.EXPAND)
+        parent.Add(self.gaugeRedundancy, 0, border=0, flag=wx.EXPAND)
 
     def _init_sizers(self):
         self.boxSizerStats = wx.BoxSizer(orient=wx.VERTICAL)
@@ -123,7 +123,7 @@ class PanelCoverageStats(wx.Panel):
         else:
             coverage_pct = (100.*stats.measured / stats.total)
             redundant_pct = (100.*stats.redundant / stats.total)
-            
+
         self.staticTextStatsCovered.SetLabel("Coverage of %5.1f%%:" % coverage_pct)
         self.staticTextStatsRedundant.SetLabel("%5.1f%% measured > once:" % redundant_pct)
         self.gaugeCoverage.SetValue(coverage_pct)
