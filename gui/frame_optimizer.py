@@ -181,6 +181,8 @@ class OptimizerController():
     #--------------------------------------------------------------------
     def restore_buttons(self):
         """ Restore the button states to the initial value """
+        if self.frame is None:
+            return
         self.frame.buttonStart.Enable(True)
         self.frame.buttonKeepGoing.Enable(False)
         self.frame.buttonApply.Enable(False)
@@ -302,7 +304,8 @@ class OptimizerController():
     #--------------------------------------------------------------------
     def plot_data(self):
         """Plot whatever the data currently is"""
-        self.frame.plotControl.draw(self.generations)
+        if self.frame is not None:
+            self.frame.plotControl.draw(self.generations)
         self.last_plot_time = time.time()
 
 
