@@ -1103,13 +1103,16 @@ class SXDGoniometer(LimitedGoniometer):
 class WISHGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +55 degrees."""
 
-    #Chi is +130 degrees
+    #Chi is +55 degrees
     chi = Float(+55.0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
-                Item('wavelength_bandwidth', visible_when="wavelength_control"),        Item('wavelength_minimum', visible_when="wavelength_control"),        Item('wavelength_maximum', visible_when="wavelength_control"),
-                Item('chi'), Item('angles_desc', style='readonly'))
+                Item('wavelength_bandwidth', visible_when="wavelength_control"),
+                Item('wavelength_minimum', visible_when="wavelength_control"),
+                Item('wavelength_maximum', visible_when="wavelength_control"),
+                Item('chi'),
+                Item('angles_desc', style='readonly'))
 
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):
@@ -1174,7 +1177,7 @@ class WISHGoniometer(LimitedGoniometer):
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
 
         #So wee need to invert the sample orientation matrix to find the one that will apply to the Q vector.
-        return numpy_utils.opposite_rotation_matrix(phi, chi, omega)
+        return numpy_utils.opposite_rotation_matrix(omega, chi, phi)
 
 
     #-------------------------------------------------------------------------------
@@ -1189,7 +1192,7 @@ class WISHGoniometer(LimitedGoniometer):
         """
         (phi, omega) = angles[0:2]
         chi = np.deg2rad(self.chi)
-        return numpy_utils.rotation_matrix(phi, chi, omega)
+        return numpy_utils.rotation_matrix(omega, chi, phi)
 
 
     #-------------------------------------------------------------------------
