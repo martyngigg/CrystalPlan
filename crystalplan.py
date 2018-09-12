@@ -13,6 +13,9 @@ Version: $Id$
 if __name__ == "__main__":
     from traits.etsconfig.api import ETSConfig
     ETSConfig.toolkit = 'wx'
+    
+    import multiprocessing
+    multiprocessing.freeze_support()
 
     import vtk
     errOut = vtk.vtkFileOutputWindow()
@@ -21,6 +24,5 @@ if __name__ == "__main__":
     vtkStdErrOut.SetInstance(errOut)
 
     import gui.main
-    # import multiprocessing
-    # multiprocessing.freeze_support()
+
     gui.main.handle_arguments_and_launch(InstalledVersion=True)

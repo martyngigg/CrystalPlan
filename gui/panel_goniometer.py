@@ -47,7 +47,6 @@ class PanelGoniometerController():
         self.current_gon_copy """
         if not self.panel.currentControl is None:
             # Remove the existing one
-            self.panel.boxSizerAll.Remove(self.panel.currentControl)
             self.panel.currentControl.Destroy()
 
         if self.current_gon_copy is None:
