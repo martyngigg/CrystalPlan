@@ -522,7 +522,6 @@ class FrameOptimizer(wx.Frame):
               name=u'splitterMain', parent=self, pos=wx.Point(8, 8),
               size=wx.Size(699, 575), style=wx.SP_3D)
         self.splitterMain.SetSashSize(8)
-        self.splitterMain.SetSashGravity(0.4)
 
         self.panelParams = wx.Panel(id=wxID_FRAMEOPTIMIZERPANELPARAMS,
               name=u'panelParams', parent=self.splitterMain, pos=wx.Point(0, 0),
@@ -533,7 +532,10 @@ class FrameOptimizer(wx.Frame):
               name=u'panelStatus', parent=self.splitterMain, pos=wx.Point(18,
               0), size=wx.Size(681, 575), style=wx.TAB_TRAVERSAL)
         self.panelStatus.SetBackgroundColour(wx.Colour(235, 246, 245))
+        
         self.splitterMain.SplitVertically(self.panelParams, self.panelStatus)
+        self.splitterMain.SetSashGravity(0.)
+        self.splitterMain.SetMinimumPaneSize(200)
 
         self.staticText1 = wx.StaticText(id=wxID_FRAMEOPTIMIZERSTATICTEXT1,
               label=u'Optimization Parameters:', name='staticText1',
