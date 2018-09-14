@@ -144,12 +144,12 @@ def check_for_changes():
 
         if not gui_utils.inelastic_mode():
             #--- Reflections changing? ELASTIC MODE ONLY! ----
-            if not (refls is None) or not (det is None):
+            if refls is not None:
                 #The reflections need recalculating
                 model.experiment.exp.recalculate_reflections(pos)
                 reflections_changed = True
                 reflections_recalculated = True
-            elif not (ref_mask is None):
+            elif ref_mask is not None:
                 #Just the mask is changing
                 # The I/sigI threshold might be different
                 model.experiment.exp.get_reflections_times_real_measured(ref_mask.threshold)
@@ -157,7 +157,7 @@ def check_for_changes():
                 model.experiment.exp.calculate_reflections_mask()
                 reflections_changed = True
 
-            if not (ref_display is None):
+            if ref_display is not None:
                 #Just reflection display options
                 reflections_changed = True
 

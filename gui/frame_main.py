@@ -291,6 +291,7 @@ class FrameMain(wx.Frame):
 
         #Load the file with no goniometer correction
         model.experiment.exp.crystal.read_ISAW_ubmatrix_file(filename, angles=[0,0,0])
+        model.experiment.exp.recalculate_reflections(pos)
         #TODO: Check if ISAW matrix file has line saying NOT GONIOMETER CORRECTED
 
         #Now this handles updating all the gui etc.
