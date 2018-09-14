@@ -136,7 +136,7 @@ def load_experiment_file_dialog(parent):
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
-    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an experiment plan from an EXP file', wildcard=filters, style=wx.OPEN )
+    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an experiment plan from an EXP file', wildcard=filters, style=wx.FD_OPEN )
     if dialog.ShowModal() == wx.ID_OK:
         filename = dialog.GetPath()
         last_experiment_path = filename
@@ -162,7 +162,7 @@ def load_integrate_file_dialog(parent, sequential_detector_numbers):
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_integrate_path
     (path, filename) = os.path.split(last_integrate_path)
-    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an ISAW .integrate or .peaks file', wildcard=filters, style=wx.OPEN )
+    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an ISAW .integrate or .peaks file', wildcard=filters, style=wx.FD_OPEN )
     if dialog.ShowModal() == wx.ID_OK:
         filename = dialog.GetPath()
         last_integrate_path = filename
@@ -189,7 +189,7 @@ def load_HFIR_int_file_dialog(parent):
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_hfir_int_path
     (path, filename) = os.path.split(last_hfir_int_path)
-    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load a HFIR .int file', wildcard=filters, style=wx.OPEN )
+    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load a HFIR .int file', wildcard=filters, style=wx.FD_OPEN )
     if dialog.ShowModal() == wx.ID_OK:
         filename = dialog.GetPath()
         last_hfir_int_path = filename

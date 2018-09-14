@@ -271,7 +271,7 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
         filename = self.crystal.ub_matrix_last_filename
         (path, ignored) = os.path.split( os.path.abspath(filename) )
         filters = 'All files (*)|*|Text files (*.txt)|*.txt'
-        dialog = wx.FileDialog ( self, defaultFile=filename, defaultDir=path, message='Choose a UB matrix file', wildcard=filters, style=wx.OPEN )
+        dialog = wx.FileDialog ( self, defaultFile=filename, defaultDir=path, message='Choose a UB matrix file', wildcard=filters, style=wx.FD_OPEN )
         if dialog.ShowModal() == wx.ID_OK:
             filename = dialog.GetPath()
             dialog.Destroy()
