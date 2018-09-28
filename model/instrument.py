@@ -1126,20 +1126,14 @@ class InstrumentInelastic(Instrument):
             ylist.sort()
 
             if use_inline_c and not config.cfg.force_pure_python:
-                #------- Inline C ---------
                 #Get some variables ready
                 azimuthal_angle = det.azimuthal_angle
                 elevation_angle = det.elevation_angle
-                #Set up several functions used in the code
-                support = "#include <math.h>\n"
-                support += crystal_calc.getq_inelastic_code_header + crystal_calc.getq_inelastic_code + crystal_calc.getq_inelastic_code_footer
-                #support += self._code_vector_length
-                #support += self._code_shrink_q_vector
                 #Dimensions of the array
                 s = coverage.shape
                 stride = s[0]
                 max_index = s[0]*s[1]*s[2] #largest index into the array +1
-                ct.calculate_coverage_inelastic(wl_input, xlist, ylist, azimuthal_angle,
+                coverage = ct.calculate_coverage_inelastic(wl_input, xlist, ylist, azimuthal_angle,
                                                 elevation_angle, np.pi,
                                                 rot_matrix, set_value1,
                                                 set_value2, number_of_ints,

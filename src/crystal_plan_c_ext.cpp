@@ -746,7 +746,7 @@ void shrink_q_vector(VectorD& q, double limit)
 
 
 
-void calculate_coverage_inelastic(double wl_input, const VectorI& xlist, const VectorI& ylist, const MatrixD& azimuthal_angle, const MatrixD& elevation_angle, const MatrixD& rot_matrix, double energy_constant, double ki_squared, double ki,  xt::pytensor<bool, 3>& coverage, int stride, int max_index, double wl_min, double wl_max, double qlim, double q_resolution) {
+ xt::pytensor<float, 3>& calculate_coverage_inelastic(double wl_input, const VectorI& xlist, const VectorI& ylist, const MatrixD& azimuthal_angle, const MatrixD& elevation_angle, const MatrixD& rot_matrix, double energy_constant, double ki_squared, double ki,  xt::pytensor<float, 3>& coverage, int stride, int max_index, double wl_min, double wl_max, double qlim, double q_resolution) {
     double kfz, kf_squared, E;
 
     double lim_min = -qlim;
@@ -882,7 +882,7 @@ void calculate_coverage_inelastic(double wl_input, const VectorI& xlist, const V
 
         } //for iiy
     }
-
+    return coverage;
 }
 
 // Python Module and Docstrings
@@ -895,7 +895,6 @@ PYBIND11_MODULE(crystal_plan_c_ext, m)
         An example xtensor extension
     )pbdoc";
 
-    m.def("getq", getq, "");
     m.def("get_detector_coordinates", get_detector_coordinates, "");
     m.def("make_volume_symmetry_map", make_volume_symmetry_map, "");
     m.def("apply_volume_symmetry", apply_volume_symmetry, "");
