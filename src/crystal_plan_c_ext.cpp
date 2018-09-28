@@ -895,7 +895,6 @@ PYBIND11_MODULE(crystal_plan_c_ext, m)
         An example xtensor extension
     )pbdoc";
 
-    m.def("getq", getq, "");
     m.def("get_detector_coordinates", get_detector_coordinates, "");
     m.def("make_volume_symmetry_map", make_volume_symmetry_map, "");
     m.def("apply_volume_symmetry", apply_volume_symmetry, "");
