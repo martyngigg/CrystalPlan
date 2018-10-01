@@ -201,11 +201,11 @@ class DetectorListController:
         """Open a dialog to load detectors from a CSV/detcal file."""
         filename = model.config.cfg.default_detector_filename
         (path, ignored) = os.path.split( os.path.abspath(filename) )
-        filters = 'CSV or detcal files|*.csv;*.detcal;*.DetCal|CSV files (*.csv)|*.csv|detcal files (*.detcal)|*.detcal;*.DetCal|All files (*)|*|'
+        filters = 'CSV or detcal files|*.csv;*.detcal;*.DetCal|CSV files (*.csv)|*.csv|detcal files (*.detcal)|*.detcal;*.DetCal|All files (*)|*'
         if gui_utils.is_mac():
             filters = '' #This is needed on Mac, for some reason the filters crashes otherwise.
         print 'opening dialog for path', path, filename
-        dialog = wx.FileDialog ( None, defaultFile=filename, defaultDir=path, message='Choose a .csv or .detcal file describing the detector geometry', wildcard=filters, style=wx.OPEN )
+        dialog = wx.FileDialog ( None, defaultFile=os.path.basename(filename), defaultDir=path, message='Choose a .csv or .detcal file describing the detector geometry', wildcard=filters, style=wx.OPEN )
         dialog.SetFilterIndex(0)
         if dialog.ShowModal() == wx.ID_OK:
             filename = dialog.GetPath()

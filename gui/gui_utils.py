@@ -31,7 +31,7 @@ def save_configuration():
     #The model configuration
     xml_config = ET.SubElement(root,'config')
     xml_config.text = dumps(model.config.cfg)
-    
+
     tree = ET.ElementTree(root)
     tree.write(filename)
 
@@ -113,7 +113,7 @@ def dialog_to_save_experiment_to_CSV(parent):
 last_experiment_path = ''
 def save_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to save the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
@@ -132,7 +132,7 @@ def save_experiment_file_dialog(parent):
 
 def load_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to load the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
@@ -158,7 +158,7 @@ def load_experiment_file_dialog(parent):
 last_integrate_path = ''
 def load_integrate_file_dialog(parent, sequential_detector_numbers):
     """Opens a dialog asking the user where to load the integrate."""
-    filters = 'ISAW .integrate or .peaks files (*.peaks;*.integrate)|*.peaks;*.integrate|All files (*)|*|'
+    filters = 'ISAW .integrate or .peaks files (*.peaks;*.integrate)|*.peaks;*.integrate|All files (*)|*'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_integrate_path
     (path, filename) = os.path.split(last_integrate_path)
@@ -185,7 +185,7 @@ def load_integrate_file_dialog(parent, sequential_detector_numbers):
 last_hfir_int_path = ''
 def load_HFIR_int_file_dialog(parent):
     """Opens a dialog asking the user where to load the int file."""
-    filters = 'HFIR .int files (*.int)|*.int|All files (*)|*|'
+    filters = 'HFIR .int files (*.int)|*.int|All files (*)|*'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_hfir_int_path
     (path, filename) = os.path.split(last_hfir_int_path)
@@ -251,7 +251,7 @@ def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
         count += 1
         # @type poscov PositionCoverage
         (keep_going, skip) = prog_dlg.Update(count, "Recalculating reflections at %s..." % model.instrument.inst.make_angles_string(poscov.angles))
-        
+
     try:
         model.experiment.exp.recalculate_reflections(None, calculation_callback=progress_callback)
     except:
@@ -319,7 +319,7 @@ TEXT_BACKGROUND_COLOUR_BAD = wx.Colour(255, 200, 200)
 #---------------------------------------------------------------------------
 def test_my_gui(WindowClass, *args, **kwargs):
     """General-purpose test for any wx window object. Here's how to use:
-    
+
     (app, pnl) = test_my_gui(WindowClass, arguments)
     pnl.do_some_stuff_here()
     app.MainLoop()
@@ -412,7 +412,7 @@ class FrameFollower():
         #Trigger a fake parent move
         self.on_move(None)
 
-        
+
     #---------------------------------------------------------------------------
     def on_move(self, event):
         """Triggered when the parent moves (or resizes)"""
@@ -431,7 +431,7 @@ class FrameFollower():
         self.unbind()
         event.Skip()
 
-        
+
 
 #Dictionary of followers
 followers = dict()
@@ -463,7 +463,7 @@ def stop_following_window(parent, child):
         follower.unbind()
         del followers[key]
 
-    
+
 
 #---------------------------------------------------------------------------
 def place_frame_next_to(parent, child, margin, follow_top=True):
@@ -480,7 +480,7 @@ def place_frame_next_to(parent, child, margin, follow_top=True):
     parent_pos = parent.GetScreenRect()
     screen_width = wx.DisplaySize()[0]
     (cw, ch) = child.GetSize()
-    
+
     #Find the right y position
     if follow_top:
         cy = parent_pos.y
