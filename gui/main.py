@@ -147,7 +147,7 @@ def launch_gui(inelastic, hb3a):
     #Create a StdOut wrapper
     global out_wrapper
     output_file_name = 'CrystalPlan_Log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt"
-    output_file_name = os.path.join(tempfile.gettempdir(), output_file_name)
+    output_file_name = os.path.join(tempfile.gettempdir(), output_file_name) 
     out_wrapper = OutWrapper(sys.stdout, output_file_name)
     sys.stdout = out_wrapper
 
@@ -187,7 +187,6 @@ def launch_gui(inelastic, hb3a):
     model.experiment.exp.recalculate_reflections(None)
 
     #Initialize the application
-    wx.DisableAsserts()
     application = CrystalPlanApp(0)
 
     #Start the thread that monitors changes to the q-space coverage calculation.

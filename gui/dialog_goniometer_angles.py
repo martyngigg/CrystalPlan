@@ -87,7 +87,7 @@ class DialogGoniometerAngles(wx.Dialog):
     def _init_ctrls(self, prnt):
         # generated method, don't edit
         wx.Dialog.__init__(self, name=u'DialogEditCrystal',
-              parent=prnt, pos=wx.Point(202, 235),
+              parent=prnt, pos=wx.Point(202, 235), 
               style= wx.RESIZE_BORDER | wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX,
               title=u'Advanced Goniometer Settings Editor')
         self.SetClientSize(wx.Size(500, 620))
@@ -111,7 +111,7 @@ class DialogGoniometerAngles(wx.Dialog):
     def __init__(self, parent, gonio):
         #Basic controls
         self._init_ctrls(parent)
-
+        
         #Setup the parameter editor traits ui panel
         self.original_gonio = gonio
         self.gonio = copy.deepcopy(gonio)
@@ -133,13 +133,13 @@ class DialogGoniometerAngles(wx.Dialog):
             )
             )
             panel_control = ang.edit_traits(parent=panel, kind='subpanel').control
-            panel_boxSizer.Add(panel_control, 0, border=0, flag=wx.EXPAND)
+            panel_boxSizer.AddWindow(panel_control, 0, border=0, flag=wx.EXPAND)
             panel.SetSizer(panel_boxSizer)
 
             #Save it for later
             self.panels.append(panel)
 
-
+        
         #Make all the sizers
         self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
         self.boxSizerIsaw = wx.BoxSizer(orient=wx.VERTICAL)
@@ -156,10 +156,10 @@ class DialogGoniometerAngles(wx.Dialog):
             )
         #Make the control and add it
         self.control_top = self.gonio.edit_traits(parent=self, view=self.view_top, kind='subpanel', handler=self.handler).control
-        self.boxSizerAll.Add(self.control_top, 0, border=0, flag=wx.EXPAND)
+        self.boxSizerAll.AddWindow(self.control_top, 0, border=0, flag=wx.EXPAND)
 
         # Now add the notebook, make it expand
-        self.boxSizerAll.Add(self.notebook, 1, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
+        self.boxSizerAll.AddWindow(self.notebook, 1, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
 
         #self.notebook.AddPage(self.panelManual, "Manually Enter Lattice")
 

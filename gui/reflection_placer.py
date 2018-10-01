@@ -47,7 +47,7 @@ class ReflectionPlacerHandler(Handler):
         self.changed_point(object)
         #Choosing another reflection, or a different detector,
         # or switching to arbitrary mode
-        if name in ["hkl", "detector", "brute_search",
+        if name in ["hkl", "detector", "brute_search", 
                     "arbitrary_bool", "arbitrary_xyz", "arbitrary_width"]:
             #Make sure the plot detector points to the right one
             self.frame.detectorPlot.set_detector(self.frame.placer.get_detector())
@@ -89,7 +89,7 @@ class PlacerMapThread(Thread):
 
     _want_abort = False
     _do_reset = False
-
+    
     def __init__(self, frame):
         """Constructor, also starts the thread."""
         Thread.__init__(self)
@@ -123,7 +123,7 @@ class PlacerMapThread(Thread):
             buffer[wl_okay_map, 0] = 200
             #Set the not allowed areas back to pale red
             buffer[~allowed_map, 0] = 255
-
+                        
             #Make the image
             return wx.ImageFromBuffer(xpixels/step, ypixels/step, buffer)
 
@@ -161,7 +161,7 @@ class PlacerMapThread(Thread):
                     if step < 1:
                         step = 0
                         wx.CallAfter(self.frame.calculation_callback, step, 0)
-
+                        
                 except (KeyboardInterrupt, SystemExit):
                     #Allow breaking the program
                     raise
@@ -170,7 +170,7 @@ class PlacerMapThread(Thread):
                     (type, value, traceback) = sys.exc_info()
                     print "Exception in PlacerMapThread:\n%s\n%s\n%s" % (type, value, traceback)
                     #sys.excepthook(type, value, traceback, thread_information="reflection_placer.PlacerMapThread")
-
+                
             else:
                 #We just wait a bit
                 time.sleep(0.1)
@@ -270,7 +270,7 @@ class ReflectionPlacer(HasTraits):
         #Now we fill in the blocks that are allowed, if surrounded by allowed spots
         # t1 = time.time()
         # old_sum = np.sum(calculated)
-
+        
         previous_step = step*2
         if previous_step <= 32:
             #Set-up block size for interpolating wavelength
@@ -322,13 +322,13 @@ class ReflectionPlacer(HasTraits):
             if callable(callback) and (time.time()-t_start) > 0.1:
                 wx.CallAfter(callback, step, ix*1.0/xpixels)
                 t_start = time.time()
-
+                
             x = (ix-xpixels/2) * det.width/(1.*xpixels)
             for iy in xrange(0, ypixels, step):
                 #Don't calculate twice
                 if not calculated[ix,iy]:
                     y = (iy-ypixels/2) * det.height/(1.*ypixels)
-
+                    
                     #Abort calculation
                     if self._want_abort:
                         self._want_abort=False
@@ -342,7 +342,7 @@ class ReflectionPlacer(HasTraits):
                     #The goniometer calculates the angles
                     (angles, wavelength) = \
                         model.instrument.inst.goniometer.get_sample_orientation_to_get_beam(beam_wanted, hkl, ub_matrix, starting_angles, search_method=(not brute_search))
-
+                        
                     #Is that position allowed?
                     can_go_there = False
                     if not angles is None:
@@ -365,13 +365,13 @@ class ReflectionPlacer(HasTraits):
             det.xpixels = 16
             det.ypixels = 16
             det.rotation = 0 #No rotation
-
+            
             #The width and height
             det.width = self.arbitrary_width
             det.height = self.arbitrary_width
             if det.width==0.0: det.width = 1.0
             if det.height==0.0: det.height = 1.0
-
+            
             # Get the XYZ coords of the center
             (x,y,z) = self.arbitrary_xyz[0,:]
             det.distance = np.sqrt( x*x + y*y + z*z )
@@ -382,9 +382,9 @@ class ReflectionPlacer(HasTraits):
             else:
                 det.azimuth_center = np.arctan2(x, z)
                 det.elevation_center = np.arctan(y / np.sqrt(x**2 + z**2))
-
+                
             det.calculate_pixel_angles()
-
+            
             # Give it back!
             return det
 
@@ -415,7 +415,7 @@ class ReflectionPlacer(HasTraits):
         det = self.get_detector()
         if det is None:
             return
-
+        
         #Set up the parameters
         beam_wanted = det.get_pixel_direction(det_pos[0], det_pos[1])
         if beam_wanted is None:
@@ -425,7 +425,7 @@ class ReflectionPlacer(HasTraits):
         starting_angles = self.starting_angles
         if len(starting_angles)==0:
             starting_angles = None
-
+        
         #The goniometer calculates the angles
         (angles, wavelength) = \
             model.instrument.inst.goniometer.get_sample_orientation_to_get_beam(beam_wanted, hkl, ub_matrix, starting_angles)
@@ -488,7 +488,7 @@ class FrameReflectionPlacer(wx.Frame):
         self.detectorPlot.Bind(detector_plot.EVT_DETECTOR_CLICKED, self.OnDetectorClick)
 #        self.detectorPlot.Bind(detector_plot.EVT_DETECTOR_CLICK_MOVED, self.OnDetectorClick)
 
-        self.buttonAddOrientation = wx.Button(label=u'Add this orientation...',
+        self.buttonAddOrientation = wx.Button(label=u'Add this orientation...', 
               parent=self, pos=wx.Point(128, 62), size=wx.Size(210, 29),
               style=0)
         self.buttonAddOrientation.Bind(wx.EVT_BUTTON, self.OnButtonAddOrientation)
@@ -501,21 +501,22 @@ class FrameReflectionPlacer(wx.Frame):
 
 
         self.statusBar = wx.StatusBar(name=u'statusBar', parent=self,
-              style=wx.RESIZE_BORDER)
+              style=wx.THICK_FRAME | wx.ST_SIZEGRIP)
         self.statusBar.SetStatusText(u'Calculation status.')
         self.statusBar.SetAutoLayout(True)
         self.SetStatusBar(self.statusBar)
 
         #---- Sizers -----
         self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
-        self.boxSizerAll.Add(wx.Size(8,8))
-        self.boxSizerAll.Add(self.staticTextHelp, 0, border=8, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
-        self.boxSizerAll.Add(wx.Size(8,8))
+        self.boxSizerAll.AddSpacer(wx.Size(8,8))
+        self.boxSizerAll.AddWindow(self.staticTextHelp, 0, border=8, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+        self.boxSizerAll.AddSpacer(wx.Size(8,8))
         self.SetSizer(self.boxSizerAll)
 
         self.boxSizerBottom = wx.BoxSizer(orient=wx.HORIZONTAL)
-        self.boxSizerBottom.Add(wx.Size(8,8))
-        self.boxSizerBottom.Add(self.buttonOK, 0)
+        self.boxSizerBottom.AddStretchSpacer(1)
+        self.boxSizerBottom.AddSpacer(wx.Size(8,8))
+        self.boxSizerBottom.AddWindow(self.buttonOK, 0)
 
 
 
@@ -540,7 +541,7 @@ class FrameReflectionPlacer(wx.Frame):
 
             # Item("brute_search", label="Use brute-force search")
 
-
+            
         viewBottom = View( \
             Group(Label("Measurement requires the following sample orientation:")),
             Item("angles_deg_string", label=angles_label, format_str="%s", style='readonly'),
@@ -559,20 +560,20 @@ class FrameReflectionPlacer(wx.Frame):
 
         #Start this thread
         self.map_thread = PlacerMapThread(self)
-
+        
         #Make it into a control
         self.controlTop = self.placer.edit_traits(parent=self, view=viewTop, kind='subpanel', handler=self.handler).control
         self.controlBottom = self.placer.edit_traits(parent=self, view=viewBottom, kind='subpanel', handler=self.handler).control
 
         #Put them in sizers
-        self.boxSizerAll.Add(self.controlTop, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
-        self.boxSizerAll.Add(self.detectorPlot, 1, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
-        self.boxSizerAll.Add(self.controlBottom, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
-        self.boxSizerAll.Add(wx.Size(8,8))
-        self.boxSizerAll.Add(self.buttonAddOrientation, 0, border=4, flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_HORIZONTAL)
-        self.boxSizerAll.Add(wx.Size(8,8))
-        self.boxSizerAll.Add(self.boxSizerBottom, flag=wx.EXPAND)
-        self.boxSizerAll.Add(wx.Size(8,8))
+        self.boxSizerAll.AddWindow(self.controlTop, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
+        self.boxSizerAll.AddWindow(self.detectorPlot, 1, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
+        self.boxSizerAll.AddWindow(self.controlBottom, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
+        self.boxSizerAll.AddSpacer(wx.Size(8,8))
+        self.boxSizerAll.AddWindow(self.buttonAddOrientation, 0, border=4, flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_HORIZONTAL)
+        self.boxSizerAll.AddSpacer(wx.Size(8,8))
+        self.boxSizerAll.AddSizer(self.boxSizerBottom, flag=wx.EXPAND)
+        self.boxSizerAll.AddSpacer(wx.Size(8,8))
         self.GetSizer().Layout()
 
         #Make an initial update of GUIs
@@ -615,7 +616,7 @@ class FrameReflectionPlacer(wx.Frame):
         else:
             s = "Calculating map, step %d, %.0f%% done."%(step, percent*100)
         self.statusBar.SetStatusText(s)
-
+        
 
 #===========================================================================
 def show_placer_frame(parent, refl, meas):

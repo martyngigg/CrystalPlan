@@ -22,17 +22,17 @@ import model
 #================================================================================
 #================================================================================
 
-[wxID_PANELREFLECTIONMEASUREMENT,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTANGLES,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTDETECTOR,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTDETECTORLABEL,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTMEASUREMENTNUMBER,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTWL,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTWLLABEL,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTX,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTXLABEL,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTY,
- wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTYLABEL,
+[wxID_PANELREFLECTIONMEASUREMENT, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTANGLES, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTDETECTOR, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTDETECTORLABEL, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTMEASUREMENTNUMBER, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTWL, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTWLLABEL, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTX, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTXLABEL, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTY, 
+ wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTYLABEL, 
 ] = [wx.NewId() for _init_ctrls in range(11)]
 
 
@@ -45,45 +45,45 @@ class PanelReflectionMeasurement(wx.Panel):
     MIN_WIDTH = 200
     DEFAULT_WIDTH = 250
     DEFAULT_HEIGHT = 88
-
+    
     def _init_coll_flexGridSizer1_Items(self, parent):
-        parent.Add(self.staticTextDetectorLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
-        parent.Add(self.staticTextDetector, 0, border=0, flag=wx.SHRINK)
-        parent.Add(self.staticTextXLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
-        parent.Add(self.staticTextX, 0, border=0, flag=wx.SHRINK)
-        parent.Add(self.staticTextWLLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
-        parent.Add(self.staticTextWL, 0, border=0, flag=wx.SHRINK)
-        parent.Add(self.staticTextYLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
-        parent.Add(self.staticTextY, 0, border=0, flag=wx.SHRINK)
-        parent.Add(self.staticTextIntegratedLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
+        parent.AddWindow(self.staticTextDetectorLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
+        parent.AddWindow(self.staticTextDetector, 0, border=0, flag=wx.SHRINK)
+        parent.AddWindow(self.staticTextXLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
+        parent.AddWindow(self.staticTextX, 0, border=0, flag=wx.SHRINK)
+        parent.AddWindow(self.staticTextWLLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
+        parent.AddWindow(self.staticTextWL, 0, border=0, flag=wx.SHRINK)
+        parent.AddWindow(self.staticTextYLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
+        parent.AddWindow(self.staticTextY, 0, border=0, flag=wx.SHRINK)
+        parent.AddWindow(self.staticTextIntegratedLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
         #Spot 9
-#        parent.Add(self.staticTextIntegrated, 0, border=0, flag=wx.ALIGN_RIGHT)
-#        parent.Add(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.RIGHT)
-        parent.Add(self.staticTextWidthLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
-        parent.Add(self.staticTextWidth, 0, border=0, flag=wx.SHRINK)
+#        parent.AddWindow(self.staticTextIntegrated, 0, border=0, flag=wx.ALIGN_RIGHT)
+#        parent.AddWindow(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.RIGHT)
+        parent.AddWindow(self.staticTextWidthLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
+        parent.AddWindow(self.staticTextWidth, 0, border=0, flag=wx.SHRINK)
 
     def _init_coll_boxSizerMain_Items(self, parent):
-        parent.Add(self.boxSizerTop, 0, border=2, flag=wx.EXPAND| wx.TOP | wx.LEFT)
-        parent.Add(self.flexGridSizer1, 0, border=0, flag=wx.EXPAND | wx.BOTTOM)
-        parent.Add(wx.Size(2,2))
+        parent.AddSizer(self.boxSizerTop, 0, border=2, flag=wx.EXPAND| wx.TOP | wx.LEFT)
+        parent.AddSizer(self.flexGridSizer1, 0, border=0, flag=wx.EXPAND | wx.BOTTOM)
+        parent.AddSpacer(wx.Size(2,2))
 
     def _init_coll_boxSizerAll_Items(self, parent):
         # generated method, don't edit
 
-        parent.Add(self.boxSizerMain, 0, border=4, flag=wx.EXPAND | wx.BOTTOM| wx.LEFT)
-        parent.Add(self.detectorPlot, 1, border=0, flag=wx.EXPAND | wx.BOTTOM)
+        parent.AddSizer(self.boxSizerMain, 0, border=4, flag=wx.EXPAND | wx.BOTTOM| wx.LEFT)
+        parent.AddWindow(self.detectorPlot, 1, border=0, flag=wx.EXPAND | wx.BOTTOM)
 
     def _init_coll_boxSizerTop_Items(self, parent):
         # generated method, don't edit
 
-        parent.Add(self.staticTextMeasurementNumber, 0, border=0, flag=0)
-        parent.Add(wx.Size(8,8))
-        parent.Add(self.staticTextAngles, 0, border=0, flag=wx.SHRINK|wx.ALIGN_CENTER_VERTICAL)
+        parent.AddWindow(self.staticTextMeasurementNumber, 0, border=0, flag=0)
+        parent.AddSpacer(wx.Size(8,8))
+        parent.AddWindow(self.staticTextAngles, 0, border=0, flag=wx.SHRINK|wx.ALIGN_CENTER_VERTICAL)
 
     def _init_sizers(self):
         # generated method, don't edit
         self.boxSizerAll = wx.BoxSizer(orient=wx.HORIZONTAL)
-
+      
         self.boxSizerTop = wx.BoxSizer(orient=wx.HORIZONTAL)
 
         self.flexGridSizer1 = wx.FlexGridSizer(cols=4, hgap=1, rows=3, vgap=2)
@@ -205,7 +205,7 @@ class PanelReflectionMeasurement(wx.Panel):
         self.meas = meas
         #Also for the detector plot
         self.detectorPlot.set_measurement(meas)
-
+        
         if meas is None:
             self.staticTextAngles.SetLabel("None")
             self.staticTextWL.SetLabel("None")

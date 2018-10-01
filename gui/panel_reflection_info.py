@@ -37,33 +37,34 @@ class PanelReflectionInfo(wx.Panel):
     def _init_coll_flexGridSizerTop_Items(self, parent):
         # generated method, don't edit
 
-        parent.Add(self.staticTextHKLLabel, 0, border=0,
+        parent.AddWindow(self.staticTextHKLLabel, 0, border=0,
               flag=wx.ALIGN_CENTER_VERTICAL)
-        parent.Add(self.gridSizerHKL, 1, border=0, flag=wx.EXPAND)
-        parent.Add(self.staticTextQLabel, 0, border=0,
+        parent.AddSizer(self.gridSizerHKL, 1, border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.staticTextQLabel, 0, border=0,
               flag=wx.ALIGN_CENTER_VERTICAL)
-        parent.Add(self.textCtrlQ, 0, border=0, flag=wx.EXPAND)
-        parent.Add(self.staticTextDlabel, 0, border=0,
+        parent.AddWindow(self.textCtrlQ, 0, border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.staticTextDlabel, 0, border=0,
               flag=wx.ALIGN_CENTER_VERTICAL)
-        parent.Add(self.textCtrlDspacing, 0, border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.textCtrlDspacing, 0, border=0, flag=wx.EXPAND)
 
-        parent.Add(self.staticDivergenceLabel, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
+        parent.AddWindow(self.staticDivergenceLabel, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
         #--- The divergence ---
         self.boxSizerDivergence = wx.BoxSizer(orient=wx.HORIZONTAL)
-        parent.Add(self.boxSizerDivergence, flag=wx.EXPAND)
-        self.boxSizerDivergence.Add(self.textCtrlDivergence, 1, border=0, flag=wx.EXPAND)
-        self.boxSizerDivergence.Add(self.staticDivergenceLabel2, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
-        parent.Add(self.checkUseEquivalent, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
+        parent.AddSizer(self.boxSizerDivergence, flag=wx.EXPAND)
+        self.boxSizerDivergence.AddWindow(self.textCtrlDivergence, 1, border=0, flag=wx.EXPAND)
+        self.boxSizerDivergence.AddWindow(self.staticDivergenceLabel2, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
+        parent.AddSpacer(wx.Size(8.8))
+        parent.AddWindow(self.checkUseEquivalent, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
 
     def _init_coll_boxSizerAll_Items(self, parent):
-        parent.Add(self.flexGridSizerTop, 0, border=3,
+        parent.AddSizer(self.flexGridSizerTop, 0, border=3,
               flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM | wx.EXPAND)
-        parent.Add(self.notebook, 1, border=0, flag=wx.EXPAND | wx.SHRINK)
+        parent.AddWindow(self.notebook, 1, border=0, flag=wx.EXPAND | wx.SHRINK)
 
     def _init_coll_gridSizerHKL_Items(self, parent):
-        parent.Add(self.textCtrlH, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
-        parent.Add(self.textCtrlK, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
-        parent.Add(self.textCtrlL, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
+        parent.AddWindow(self.textCtrlH, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
+        parent.AddWindow(self.textCtrlK, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
+        parent.AddWindow(self.textCtrlL, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
 
     def _init_sizers(self):
         self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
@@ -72,11 +73,11 @@ class PanelReflectionInfo(wx.Panel):
 
         #The scroller with the default button
         self.boxSizerScrollWindow = wx.BoxSizer(orient=wx.VERTICAL)
-        self.boxSizerScrollWindow.Add(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+        self.boxSizerScrollWindow.AddWindow(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
 
         self.boxSizerScrollWindowReal = wx.BoxSizer(orient=wx.VERTICAL)
 
-        self.flexGridSizerTop = wx.FlexGridSizer(2, 2, 3)
+        self.flexGridSizerTop = wx.FlexGridSizer(hgap=2, vgap=3)
         self.flexGridSizerTop.SetMinSize(wx.Size(100, 87))
 
         self.gridSizerHKL = wx.GridSizer(cols=3, hgap=2, rows=1, vgap=0)
@@ -86,12 +87,12 @@ class PanelReflectionInfo(wx.Panel):
         self._init_coll_gridSizerHKL_Items(self.gridSizerHKL)
 
         #The predicted and real windows
-#        self.boxSizerPredicted.Add(self.staticTextTimesMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
-        self.boxSizerPredicted.Add(wx.StaticLine(parent=self.windowPredicted), flag=wx.EXPAND)
-        self.boxSizerPredicted.Add(self.scrolledWindowMeasurements, 1, border=0, flag=wx.SHRINK | wx.EXPAND)
-#        self.boxSizerReal.Add(self.staticTextTimesRealMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
-        self.boxSizerReal.Add(wx.StaticLine(parent=self.windowReal), flag=wx.EXPAND)
-        self.boxSizerReal.Add(self.scrolledWindowRealMeasurements, proportion=1, border=0, flag=wx.SHRINK | wx.EXPAND)
+#        self.boxSizerPredicted.AddWindow(self.staticTextTimesMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
+        self.boxSizerPredicted.AddWindow(wx.StaticLine(parent=self.windowPredicted), flag=wx.EXPAND)
+        self.boxSizerPredicted.AddWindow(self.scrolledWindowMeasurements, 1, border=0, flag=wx.SHRINK | wx.EXPAND)
+#        self.boxSizerReal.AddWindow(self.staticTextTimesRealMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
+        self.boxSizerReal.AddWindow(wx.StaticLine(parent=self.windowReal), flag=wx.EXPAND)
+        self.boxSizerReal.AddWindow(self.scrolledWindowRealMeasurements, proportion=1, border=0, flag=wx.SHRINK | wx.EXPAND)
 
         self.windowPredicted.SetSizer(self.boxSizerPredicted)
         self.windowReal.SetSizer(self.boxSizerReal)
@@ -343,7 +344,7 @@ class PanelReflectionInfo(wx.Panel):
 
             #Remove all static text label
             for txt in self.hkl_static_texts[real_mode]:
-                # sizer.Remove(txt)
+                sizer.Remove(txt)
                 txt.Destroy()
             self.hkl_static_texts[real_mode] = []
 
@@ -364,7 +365,7 @@ class PanelReflectionInfo(wx.Panel):
                 txt = wx.StaticText(parent=scrollwin, label=s)
                 self.hkl_static_texts[real_mode].append(txt)
                 #Slip it in the right spot
-                sizer.Insert(i+reflection_number+[1,0][real_mode], txt, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+                sizer.InsertWindow(i+reflection_number+[1,0][real_mode], txt, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
 
                 #Now do all the measurements
                 for refl_measurement_number in xrange(num_measurements):
@@ -373,7 +374,7 @@ class PanelReflectionInfo(wx.Panel):
                         new_panel = PanelReflectionMeasurement(scrollwin)
                         if (i % 2)==0:
                             new_panel.SetBackgroundColour(gui_utils.TEXT_BACKGROUND_COLOUR_GOOD)
-                        sizer.Add(new_panel, 1, border=2, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM | wx.EXPAND | wx.SHRINK)
+                        sizer.AddWindow(new_panel, 1, border=2, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM | wx.EXPAND | wx.SHRINK)
                         new_panel.SetClientSize(min_panel_size)
                         new_panel.SetMinSize(min_panel_size)
                         scrollwin.SetMinSize(min_panel_size)

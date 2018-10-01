@@ -14,8 +14,8 @@ import wx.lib.newevent
 #--------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------
-[wxID_VALUESLIDER, wxID_VALUESLIDERSLIDERVALUE,
- wxID_VALUESLIDERSTATICTEXTLABEL, wxID_VALUESLIDERTEXTVALUE,
+[wxID_VALUESLIDER, wxID_VALUESLIDERSLIDERVALUE, 
+ wxID_VALUESLIDERSTATICTEXTLABEL, wxID_VALUESLIDERTEXTVALUE, 
 ] = [wx.NewId() for _init_ctrls in range(4)]
 
 
@@ -33,39 +33,39 @@ class ValueSlider(wx.Panel):
     Value = 0.0
     #Internal values
     _insideSetvalue = False
-
+    
     def _init_coll_boxSizerAll_Items(self, parent):
         # generated method, don't edit
 
-        parent.Add(self.boxSizerTop, 0, border=0, flag=wx.EXPAND)
-        parent.Add(self.sliderValue, 0, border=0, flag=wx.EXPAND)
+        parent.AddSizer(self.boxSizerTop, 0, border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.sliderValue, 0, border=0, flag=wx.EXPAND)
 
     def _init_coll_boxSizerTop_Items(self, parent):
         # generated method, don't edit
 
-        parent.Add(self.staticTextLabel, 1, border=0,
+        parent.AddWindow(self.staticTextLabel, 1, border=0,
               flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL)
-        parent.Add(wx.Size(8, 8), border=0, flag=0)
-        parent.Add(self.textValue, 0, border=0, flag=0)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.textValue, 0, border=0, flag=0)
 
     def SetLabel(self, text):
         """Set the text of the label."""
         self.staticTextLabel.SetLabel(text)
-
+        
     def SetMin(self, value):
         """Sets the minimum value allowed in the control."""
         self.Min = value
         self.sliderValue.SetMin( int(value*self.float_convert) )
         self.sliderValue.SetPageSize(5)
         self._check_value()
-
+        
     def SetMax(self, value):
         """Sets the maximum value allowed in the control."""
         self.Max = value
         self.sliderValue.SetMax( int(value*self.float_convert) )
         self.sliderValue.SetPageSize(5)
         self._check_value()
-
+        
     def SetValue(self, value, change_text=True):
         """Sets the value shown in the control. Text gets updated unless otherwise specified."""
         self._insideSetvalue = True
@@ -76,14 +76,14 @@ class ValueSlider(wx.Panel):
         if change_text:
             self.textValue.SetValue( str(self.Value) )
         self._insideSetvalue = False
-
+        
     def _check_value(self):
         """Makes sure that the values entered are within the bounds."""
         if self.Value < self.Min:
             self.SetValue(self.Min)
         if self.Value > self.Max:
             self.SetValue(self.Max)
-
+        
     def _init_sizers(self):
         # generated method, don't edit
         self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
@@ -170,7 +170,7 @@ class ValueSlider(wx.Panel):
             self.SetValue ( self.Value, change_text=True )
             self.SendScrollEndEvent()
         event.Skip()
-
+        
     def OnTextEnter(self, event):
         """Called when pressing enter or losing focus."""
         self.SetValue ( self.Value, change_text=True )

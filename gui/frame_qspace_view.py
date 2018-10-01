@@ -248,7 +248,6 @@ class QspaceViewController(HasTraits):
     def on_reflection_info_child_frame_close(self, event):
         """Called when a child FrameReflectionInfo is closed."""
         #Clear the instance
-        del self.reflection_info_child_frame
         self.reflection_info_child_frame = None
         event.Skip()
 
@@ -849,17 +848,17 @@ class FrameQspaceView(wx.Frame):
 
     def _init_coll_boxSizerStats_Items(self, parent):
         #The stats panel goes here, before the rest
-        parent.Add(self.staticLineSpacer, 0, border=0, flag=wx.EXPAND)
-        parent.Add(self.buttonAdvancedView, 0, border=1, flag=0)
+        parent.AddWindow(self.staticLineSpacer, 0, border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.buttonAdvancedView, 0, border=1, flag=0)
 
     def _init_coll_boxSizerBottomPanel_Items(self, parent):
-        parent.Add(self.notebookView, 10, border=0, flag=wx.EXPAND)
-        parent.Add(wx.Size(8, 8), border=0, flag=0)
-        parent.Add(self.panelStats, 0, border=0, flag=wx.EXPAND)
-        parent.Add(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.notebookView, 10, border=0, flag=wx.EXPAND)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.panelStats, 0, border=0, flag=wx.EXPAND)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
 
     def _init_coll_boxSizer1_Items(self, parent):
-        parent.Add(self.splitterAll, 1, border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.splitterAll, 1, border=0, flag=wx.EXPAND)
 
     def _init_sizers(self):
         self.boxSizer1 = wx.BoxSizer(orient=wx.VERTICAL)
