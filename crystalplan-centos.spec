@@ -20,10 +20,10 @@ exe = EXE(pyz,
           a.scripts,
           exclude_binaries=True,
           name='crystalplan',
-          debug=True,
+          debug=False,
           strip=False,
           upx=True,
-          console=True,
+          console=False,
           icon='gui/icons/CrystalPlan_icon.ico'
          )
 
