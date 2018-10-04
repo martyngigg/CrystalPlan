@@ -94,7 +94,7 @@ class DetectorVisualization(HasTraits):
 #        lines([det.base_point.flatten(), (det.base_point+det.normal*det.width/2).flatten()], color=col, tube_radius=rad, mlab=self.scene.mlab)
         #Find the middle and put text there
         center = det.pixels[:, det.ypixels/2,  det.xpixels/2]
-        text3d(center, det.name, font_size=15, color=col, mlab=self.scene.mlab)
+        self.scene.mlab.text3d(center[0], center[1], center[2], str(det.name), scale=20, color=col)
 
     #---------------------------------------------------------------------------------------------
     def display(self, reset_view=True):
@@ -124,9 +124,9 @@ class DetectorVisualization(HasTraits):
         length = max_distance * 1.25
         col = (1.0,0.0,0.0)
         arrow( vector([0,0,-length]),  vector([0,0,+length]), head_size=length/10, color=col, tube_radius=length/100., mlab=mlab)
-        text3d(vector([0,0,+length*1.1]), "Beam direction", font_size=18, color=(0,0,0), mlab=mlab)
+        self.scene.mlab.text3d(0, 0, +length*1.1, "Beam direction", scale=23, color=(0,0,0))
         arrow( vector([0,0,0]),  vector([0,+length,0]), head_size=length/12, color=(0,0,0), tube_radius=length/150., mlab=mlab)
-        text3d(vector([0,+length*1.1,0]), "Up", font_size=16, color=(0,0,0), mlab=mlab)
+        self.scene.mlab.text3d(0,+length*1.1, 0, "Up", scale=21, color=(0,0,0))
         mlab.orientation_axes()
         if reset_view:
             #Set the camera
