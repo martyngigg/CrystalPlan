@@ -633,6 +633,20 @@ class FrameMain(wx.Frame):
     def OnClose(self, event):
         res = wx.MessageDialog(self, "Are you sure you want to quit %s?" % CrystalPlan_version.package_name, "Quit %s?" % CrystalPlan_version.package_name, wx.YES_NO | wx.YES_DEFAULT).ShowModal()
         if res == wx.ID_YES:
+            # Remove the wx python clean up on exit handler.
+            # This removes the App_CleanUp functions for the list of exit handlers.
+            # This is a workaround because without this wxPython shows a error dialog
+            # with the following message in Windows:
+            # > assert "module->m_state == State_Initialized" failed in DoCleanUpModules(): not initialized module being cleaned up
+            # This is not a problem with our code but with TraitsUI/wxPython
+            # See this google form post for more context:
+            # https://groups.google.com/forum/#!topic/wxpython-dev/zzD6JjTBgrE
+            import atexit
+            try:
+                atexit._exithandlers = filter(lambda (func, _, __): func.__name__ != "App_CleanUp", atexit._exithandlers)
+            except AttributeError:
+                atexit.unregister(wx._core._wxPyCleanup)
+
             self.Destroy()
         else:
             event.Veto()
