@@ -203,17 +203,17 @@ class PanelSample(wx.Panel):
         self.crystal_view = View(
             Item("name", label="Crystal Name"),
             Item("description", label="Description:", editor=TextEditor(multi_line=True)),
-            Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", style='readonly'),
-            Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", style='readonly'),
-            Item("ub_matrix", label="Sample's UB Matrix", style='readonly'),
+            Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", format_str='%.3f', style='readonly'),
+            Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", format_str='%.3f', style='readonly'),
+            Item("ub_matrix", label="Sample's UB Matrix", format_str='%.3f', style='readonly'),
             Item("point_group_name", label="Point Group", style='readonly'),
             Item("reflection_condition_name", label="Reflection Condition", style='readonly'),
 #            Item("recip_a", label="a*", style='readonly'),
 #            Item("recip_b", label="b*", style='readonly'),
 #            Item("recip_c", label="c*", style='readonly'),
-            Item("a", label="a vector", style='readonly'),
-            Item("b", label="b vector", style='readonly'),
-            Item("c", label="c vector", style='readonly'),
+            Item("a", label="a vector", format_str='%.3f', style='readonly'),
+            Item("b", label="b vector", format_str='%.3f', style='readonly'),
+            Item("c", label="c vector", format_str='%.3f', style='readonly'),
             resizable=True
             )
 
