@@ -520,19 +520,19 @@ class FrameOptimizer(wx.Frame):
 
         self.splitterMain = wx.SplitterWindow(id=wxID_FRAMEOPTIMIZERSPLITTERMAIN,
               name=u'splitterMain', parent=self, pos=wx.Point(8, 8),
-              size=wx.Size(699, 575), style=wx.SP_3D)
+              size=wx.Size(900, 800), style=wx.SP_3D)
         self.splitterMain.SetSashSize(8)
 
         self.panelParams = wx.Panel(id=wxID_FRAMEOPTIMIZERPANELPARAMS,
               name=u'panelParams', parent=self.splitterMain, pos=wx.Point(0, 0),
-              size=wx.Size(10, 575), style=wx.TAB_TRAVERSAL)
+              size=wx.Size(400, 800), style=wx.TAB_TRAVERSAL)
         self.panelParams.SetBackgroundColour(wx.Colour(246, 246, 235))
 
         self.panelStatus = wx.Panel(id=wxID_FRAMEOPTIMIZERPANELSTATUS,
               name=u'panelStatus', parent=self.splitterMain, pos=wx.Point(18,
-              0), size=wx.Size(681, 575), style=wx.TAB_TRAVERSAL)
+              0), size=wx.Size(500, 800), style=wx.TAB_TRAVERSAL)
         self.panelStatus.SetBackgroundColour(wx.Colour(235, 246, 245))
-        
+
         self.splitterMain.SplitVertically(self.panelParams, self.panelStatus)
         self.splitterMain.SetSashGravity(0.)
         self.splitterMain.SetMinimumPaneSize(200)
