@@ -76,3 +76,20 @@ def equal_objects(first, second):
                         return False
     #If you get to this point, all were equal, return true.
     return True
+
+def cleanup_wxpython():
+    """Remove the wx python clean up on exit handler.
+    
+    This removes the App_CleanUp functions for the list of exit handlers.
+    This is a workaround because without this wxPython shows a error dialog with the following message in Windows:
+    > assert "module->m_state == State_Initialized" failed in DoCleanUpModules(): not initialized module being cleaned up
+    This is not a problem with our code but with TraitsUI/wxPython
+    See this google form post for more context:
+    https://groups.google.com/forum/#!topic/wxpython-dev/zzD6JjTBgrE
+    """
+    import atexit
+    try:
+        atexit._exithandlers = filter(lambda (func, _, __): func.__name__ != "App_CleanUp", atexit._exithandlers)
+    except AttributeError:
+        atexit.unregister(wx._core._wxPyCleanup)
+        

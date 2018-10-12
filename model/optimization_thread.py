@@ -1,6 +1,6 @@
 import threading
 from model.optimization import run_optimization
-import wx
+from model.utils import cleanup_wxpython
 
 class OptimizationThread(threading.Thread):
     """Thread to run the GA optimization."""
@@ -24,4 +24,5 @@ class OptimizationThread(threading.Thread):
         finally:
             pass
             self.controller.params.optimization_running = False
-        
+
+        cleanup_wxpython()
