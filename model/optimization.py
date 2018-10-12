@@ -9,6 +9,7 @@ import numpy as np
 import random
 import copy
 import platform
+import multiprocessing
 from functools import partial
 
 #--- Model Imports ----
@@ -59,7 +60,7 @@ class OptimizationParameters(HasTraits):
     crossover_rate = Float(0.01, desc="the probability of cross-over.")
     use_multiprocessing = Bool(True, desc="to use multiprocessing (multiple processors) to speed up calculation.")
 
-    number_of_processors = Int(10, desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available. Try to keep your population = a multiple of the # of processors.")
+    number_of_processors = Int(multiprocessing.cpu_count(), desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available. Try to keep your population = a multiple of the # of processors.")
     use_old_population = Bool(False)
     elitism = Bool(True, desc="to use elitism, which means to keep the best individuals from the previous generation.")
     elitism_replacement = Int(1, desc="the Elitism replacement number - how many of the best individuals from the previous generation to keep.")
