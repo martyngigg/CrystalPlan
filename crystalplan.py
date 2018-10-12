@@ -21,6 +21,6 @@ if __name__ == "__main__":
     vtkStdErrOut.SetInstance(errOut)
 
     import gui.main
-    # import multiprocessing
-    # multiprocessing.freeze_support()
+    import multiprocessing
+    multiprocessing.freeze_support()
     gui.main.handle_arguments_and_launch(InstalledVersion=True)
