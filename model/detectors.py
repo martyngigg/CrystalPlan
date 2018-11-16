@@ -473,6 +473,7 @@ class CylindricalDetector(Detector):
 
         #Grid of angle and height
         (ptheta, pheight) = np.meshgrid(thetas,heights)
+        ptheta += np.pi/2.
         # The circle is in the X-Z direction
         px = self.origin[0] + np.cos(ptheta) * self.radius
         pz = self.origin[2] + np.sin(ptheta) * self.radius
@@ -527,14 +528,6 @@ class CylindricalDetector(Detector):
         #Some checks
         if len(beam.shape) != 2 or beam.shape[0] != 3:
             raise ValueError("'beam' parameter has incorrect shape. Should be 3xN array")
-
-#        #output h,v, wl coordinate arrays
-#        (ignored, array_size) = beam.shape
-#        h_out = np.zeros( array_size )
-#        v_out = np.zeros( array_size )
-#        wl_out = np.zeros( array_size )
-#        distance_out = np.zeros( array_size )
-#        hits_it = np.zeros( array_size, dtype=bool )
 
         # Beam directions
         x = beam[0,:]

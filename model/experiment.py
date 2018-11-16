@@ -2351,6 +2351,61 @@ exp = None
 import unittest
 import time
 import copy
+from reflections import Reflection, ReflectionRealMeasurement
+
+class TestExperimentWithCylindericalDetectors(unittest.TestCase):
+
+    def setUp(self):
+        instrument.inst = instrument.Instrument("../instruments/SXD_detectors.detcal")
+        instrument.inst.set_goniometer(goniometer.Goniometer())
+        self.exp = Experiment(instrument.inst)
+        e = self.exp
+        e.inst.d_min = 0.5
+        e.crystal.lattice_lengths = (5.0, 5.0, 5.0)
+        e.crystal.lattice_angles_deg = (90.0, 90.0, 90.0)
+        #UB and reciprocal
+        e.crystal.make_ub_matrix()
+        e.crystal.calculate_reciprocal()
+
+    def setup_calculated_reflections(self):
+        """Setup some calculations for reflections"""
+        # @type e Experiment
+        e = self.exp
+        e.range_h = (-10,10)
+        e.range_k = (-10,10)
+        e.range_l = (-10,10)
+        e.range_automatic = False
+        e.range_limit_to_sphere = False
+        e.initialize_reflections()
+        e.inst.wl_min = 0.5
+        e.inst.wl_max = 4.0
+        #Position coverage object with 0 sample rotation
+        poscov = instrument.PositionCoverage( [0, 0, 0.], None, np.identity(3))
+        e.inst.positions.append(poscov)
+        pos_param = ParamPositions( {id(poscov):True} )
+        self.pos_param = pos_param
+        #Test get_positions_used
+        pos = e.get_positions_used(pos_param)
+        assert len(pos) == 1, "get_positions_used returns one poscov object."
+        return pos_param
+
+    def test_recalculate_reflections(self):
+        e = self.exp
+        pos_param = self.setup_calculated_reflections()
+
+        # Setup reflection that should be measured
+        # hkl = np.atleast_2d([0, 0, -3]).T
+        hkl = np.atleast_2d([[-1, -1, -6], [-1, -1, -5], [-1, -1, -4]]).T
+        q_vector = np.dot(e.crystal.reciprocal_lattice, hkl)
+
+        e.reflections_hkl = hkl
+        e.reflections = [Reflection(hkl, q_vector)]
+
+        # run code under test
+        e.recalculate_reflections(pos_param)
+
+        total = e.reflections[0].times_measured()
+        self.assertEqual(total, 0)
 
 #==================================================================
 class TestExperiment(unittest.TestCase):
@@ -2459,7 +2514,7 @@ class TestExperiment(unittest.TestCase):
         #Test get_positions_used
         pos = e.get_positions_used(pos_param)
         assert len(pos) == 1, "get_positions_used returns one poscov object."
-        e.recalculate_reflections(pos_param)
+        return pos_param
 
     def continue_get_reflections_measured(self, measured, num_expected, message):
         """Mini-test of get_reflections_measured"""
@@ -2471,13 +2526,17 @@ class TestExperiment(unittest.TestCase):
             assert isinstance(l[0], Reflection), "get_reflections_measured list contains a Reflection object"+message
 
     def test_recalculate_reflections(self):
-        self.setup_calculated_reflections()
         e = self.exp
+        pos_param = self.setup_calculated_reflections()
+
+        e.recalculate_reflections(pos_param)
+
         #Manual total check
         total = 0
         for ref in e.reflections:
             total += ref.times_measured()
-        assert  total == 8, "# of reflections measured at wl_min=0.5"
+
+        self.assertEqual(total, 8)
         #And now we use the get_reflections_measured mini-test
         self.continue_get_reflections_measured(True, 8, " at wl_min=0.5")
         self.continue_get_reflections_measured(False, 9253, " NOT measured, at wl_min=0.5")

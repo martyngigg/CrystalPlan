@@ -494,12 +494,12 @@ def getq(az, elevation, wl_output, q_rot_matrix, wl_input=None):
     if wl_input is None:
         # -- elastic ---
         wl_input = wl_output
-        q = ct.getq(wl_output, elevation, az, np.pi, rot_matrix)
-        return q
+        q = ct.getq(wl_output, az, elevation, np.pi, rot_matrix)
+        return q[np.newaxis].T
     else:
-        #--- inelastic ---
-        q, q_unrot = ct.getq_inelastic(wl_input, wl_output, elevation, az, np.pi, rot_matrix)
-        return (q, q_unrot)
+        ##--- inelastic ---
+        q, q_unrot = ct.getq_inelastic(wl_input, wl_output, az, elevation, np.pi, rot_matrix)
+        return (q[np.newaxis].T, q_unrot[np.newaxis].T)
 
 
 

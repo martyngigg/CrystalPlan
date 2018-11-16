@@ -33,72 +33,61 @@ float absolute(float x)
 
 int get_detector_coordinates(VectorD& base_point, VectorD& horizontal, VectorD& vertical, VectorD& normal, 
         VectorD& h_out, VectorD& v_out, VectorD& wl_out, VectorD& distance_out, xt::pytensor<bool, 1>& hits_it, 
-        const MatrixD& beam, int array_size, float n_dot_base, int height, int width, float wl_min, float wl_max) {
+        const MatrixD& beam, int array_size, double n_dot_base, int height, int width, double wl_min, double wl_max) {
 
-        float az, elev;
-        float bx,by,bz;
-        float x,y,z, temp;
-        float h,v,d;
-        float diff_x, diff_y, diff_z;
-
+        double az, elev;
+        double bx,by,bz;
+        double x,y,z, temp;
+        double h,v,d;
+        double diff_x, diff_y, diff_z;
         //some vars
-        float base_point_x = base_point(0);
-        float base_point_y = base_point(1);
-        float base_point_z = base_point(2);
-        float horizontal_x = horizontal(0);
-        float horizontal_y = horizontal(1);
-        float horizontal_z = horizontal(2);
-        float vertical_x = vertical(0);
-        float vertical_y = vertical(1);
-        float vertical_z = vertical(2);
-        float nx = normal(0);
-        float ny = normal(1);
-        float nz = normal(2);
-        float n_dot_base_f = n_dot_base;
-
+        double base_point_x = base_point(0);
+        double base_point_y = base_point(1);
+        double base_point_z = base_point(2);
+        double horizontal_x = horizontal(0);
+        double horizontal_y = horizontal(1);
+        double horizontal_z = horizontal(2);
+        double vertical_x = vertical(0);
+        double vertical_y = vertical(1);
+        double vertical_z = vertical(2);
+        double nx = normal(0);
+        double ny = normal(1);
+        double nz = normal(2);
+        double n_dot_base_f = double(n_dot_base);
         int i;
         int error_count = 0;
         int bad_beam = 0;
-        float projection, beam_length,  wavelength;
-
+        double projection, beam_length,  wavelength;
         for (i=0; i<array_size; i++)
         {
             //Good beam, nice beam.
             bad_beam = 0;
-
             // Non-normalized beam direction
-            bx=beam(0, i);
-            by=beam(1, i);
-            bz=beam(2, i);
-
+            bx=beam(0,i);
+            by=beam(1,i);
+            bz=beam(2,i);
             // So we normalize it
             beam_length = sqrt(bx*bx + by*by + bz*bz);
             bx = bx/beam_length;
             by = by/beam_length;
             bz = bz/beam_length;
-
             //Check if the wavelength is within range
             wavelength = 6.2831853071795862/beam_length;
-
             //If there are any nan's in the beam direction, this next check will return false.
             if ((wavelength <= wl_max) && (wavelength >= wl_min))
             {
                 //Wavelength in range! Keep going.
-
                 //Make sure the beam points in the same direction as the detector, not opposite to it
                 // project beam onto detector's base_point
                 projection = (base_point_x*bx)+(base_point_y*by)+(base_point_z*bz);
                 if (projection > 0)
                 {
                     //beam points towards the detector
-
                     //This beam coincides with the origin (0,0,0)
                     //Therefore the line equation is x/bx = y/by = z/bz
-
                     //Now we look for the intersection between the plane of normal nx,ny,nz and the given angle.
-
                     //Threshold to avoid divide-by-zero
-                    float min = 1e-6;
+                    double min = 1e-6;
                     if ((absolute(bz) > min)) // && (absolute(nz) > min))
                     {
                         z = n_dot_base_f / ((nx*bx)/bz + (ny*by)/bz + nz);
@@ -139,8 +128,6 @@ int get_detector_coordinates(VectorD& base_point, VectorD& horizontal, VectorD& 
                 //Wavelength is out of range. Can't measure it!
                 bad_beam = 1;
             }
-
-
             if (bad_beam)
             {
                 //A bad beam means it does not hit, for sure.
@@ -156,21 +143,16 @@ int get_detector_coordinates(VectorD& base_point, VectorD& horizontal, VectorD& 
                 diff_x = x - base_point_x;
                 diff_y = y - base_point_y;
                 diff_z = z - base_point_z;
-
                 //Project onto horizontal and vertical axes by doing a dot product
                 h = diff_x*horizontal_x + diff_y*horizontal_y + diff_z*horizontal_z;
                 v = diff_x*vertical_x + diff_y*vertical_y + diff_z*vertical_z;
-
                 // Save to matrix
                 h_out(i) = h;
                 v_out(i) = v;
-
                 // the scattered beam is 1/wl long.
                 wl_out(i) = wavelength;
-
                 //What was the distance to the detector spot?
                 distance_out(i) = sqrt(x*x + y*y + z*z);
-
                 // And do we hit that detector?
                 // Detector is square and our h,v coordinates are relative to the center of it.
                 hits_it(i) = (v > -height/2) && (v < height/2) && (h > -width/2) && (h < width/2);
@@ -263,7 +245,7 @@ VectorD getq(double wl_output, double az, double elevation, double pi, const Mat
     double incident_z = 1.0 / wl_input;
 
     //The vector difference between the two is the q vector
-    float qx, qy, qz;
+    double qx, qy, qz;
     qx = 2 * pi * x;
     qy = 2 * pi * y;
     qz = 2 * pi * (z - incident_z);
