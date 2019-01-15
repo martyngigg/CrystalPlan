@@ -17,8 +17,10 @@ import copy
 import time
 import warnings
 import string
+from collections import namedtuple
 from string import replace, strip, find
 import numpy as np
+import numpy.testing as npt
 from numpy import array, sin, cos, pi, dot
 import scipy.optimize
 
@@ -1103,8 +1105,7 @@ class SXDGoniometer(LimitedGoniometer):
 class WISHGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +55 degrees."""
 
-    #Chi is +55 degrees
-    chi = Float(0., label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
+    chi = Float(45.0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -1124,7 +1125,6 @@ class WISHGoniometer(LimitedGoniometer):
         self.name = "WISH Goniometer"
         self.description = "Goniometer with two degrees of freedom (phi and omega), with chi fixed at +55 degrees."
 
-        self.chi = +55.0
 
         #Make the angle info object
         self.gonio_angles = [
@@ -1155,9 +1155,8 @@ class WISHGoniometer(LimitedGoniometer):
     def get_phi_chi_omega(self, angles):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
-        (phi, omega) = angles[0:2]
-        chi = np.deg2rad(self.chi)
-        return (phi, chi, omega)
+        (phi, omega) = angles
+        return (phi, np.deg2rad(self.chi), omega)
 
     #-------------------------------------------------------------------------------
     def make_q_rot_matrix(self, angles):
@@ -1170,13 +1169,12 @@ class WISHGoniometer(LimitedGoniometer):
                 # of angles of this goniometer.
         """
         #For other instruments, this method may be different.
-        (phi, omega) = angles[0:2]
-        chi = np.deg2rad(self.chi)
+        (phi, chi, omega) = self.get_phi_chi_omega(angles)
 
         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
 
-        #So wee need to invert the sample orientation matrix to find the one that will apply to the Q vector.
+        #So we need to invert the sample orientation matrix to find the one that will apply to the Q vector.
         return numpy_utils.opposite_rotation_matrix(phi, chi, omega)
 
 
@@ -1190,10 +1188,8 @@ class WISHGoniometer(LimitedGoniometer):
             angles: should be a list of angle values, in unfriendly units, that matches the
                 # of angles of this goniometer.
         """
-        (phi, omega) = angles[0:2]
-        chi = np.deg2rad(self.chi)
+        (phi, chi, omega) = self.get_phi_chi_omega(angles)
         return numpy_utils.rotation_matrix(phi, chi, omega)
-
 
     #-------------------------------------------------------------------------
     def calculate_angles_to_rotate_vector(self, *args, **kwargs):
@@ -1220,7 +1216,6 @@ class WISHGoniometer(LimitedGoniometer):
                 #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
                 return None
             else:
-                #Okay, we found a decent chi
                 return [phi, omega]
 
 
@@ -2928,6 +2923,53 @@ class TestGoniometers(unittest.TestCase):
         starting_vec = np.array([1,2,3]);
         ending_vec = np.array([2,2,3]);
         g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, [0, 0, 0])
+
+
+class TestWishGoniometer(unittest.TestCase):
+
+    def setUp(self):
+        self.gonio = WISHGoniometer()
+        self.AngleSet = namedtuple('AngleSet', ['phi', 'omega'])
+
+    def test_initial_position(self):
+        angles = self.AngleSet(0, 0)
+        fixed_angle = np.deg2rad(self.gonio.chi)
+        mat = self.gonio.make_q_rot_matrix(angles)
+
+        exp_mat = numpy_utils.opposite_rotation_matrix(0, fixed_angle, 0)
+        npt.assert_almost_equal(mat, exp_mat)
+
+    def test_rotate_around_omega(self):
+        angles = self.AngleSet(0, 10)
+        fixed_angle = np.deg2rad(self.gonio.chi)
+        mat = self.gonio.make_q_rot_matrix(angles)
+
+        # Create expected rotation matrix.
+        # This should just be a rotation around the y axis.
+        exp_mat = numpy_utils.opposite_rotation_matrix(angles.omega, fixed_angle, angles.phi)
+        npt.assert_almost_equal(mat, exp_mat)
+
+    def test_rotate_around_phi(self):
+        angles = self.AngleSet(10, 0)
+        fixed_angle = np.deg2rad(self.gonio.chi)
+        mat = self.gonio.make_q_rot_matrix(angles)
+
+        # Create expected rotation matrix.
+        # This should be a rotation about both the phi and omega axes
+        # because the phi axis is fixed at 45 degrees.
+        exp_mat = numpy_utils.opposite_rotation_matrix(angles.omega, fixed_angle, angles.phi)
+        npt.assert_almost_equal(mat, exp_mat)
+
+    def test_rotate_around_phi_and_omega(self):
+        angles = self.AngleSet(10, 10)
+        fixed_angle = np.deg2rad(self.gonio.chi)
+        mat = self.gonio.make_q_rot_matrix(angles)
+
+        # Create expected rotation matrix.
+        # This should be a rotation about both the phi and omega axes
+        # because the phi axis is fixed at 45 degrees.
+        exp_mat = numpy_utils.opposite_rotation_matrix(angles.omega, fixed_angle, angles.phi)
+        npt.assert_almost_equal(mat, exp_mat)
 
 #===============================================================================================
 if __name__ == "__main__":
