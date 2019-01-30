@@ -603,6 +603,7 @@ int angle_fitness(const VectorD& rot_angle_list, const VectorD& ending_vec, cons
         omega_list(output_index) = omega;
         output_index++;
     }
+    return 0;
 }
 
 double vector_length(const VectorD& vector)
