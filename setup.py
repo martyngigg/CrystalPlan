@@ -26,7 +26,7 @@ package_data = {'CrystalPlan':['instruments/*.xls', 'instruments/*.csv', 'instru
 scripts = ['crystalplan.py']
 
 #Package requirements
-install_requires = ['pybind11>=2.0.1', 'numpy', 'mayavi==4.6.1', 'traitsui==6.1.3', 'traits==5.2.0', 'pyface==6.1.2', 'scipy']
+install_requires = ['pybind11>=2.0.1', 'numpy', 'mayavi==4.6.1', 'traitsui==6.1.3', 'traits==4.6.0', 'pyface==6.1.2', 'scipy']
 
 def pythonVersionCheck():
     # Minimum version of Python
