@@ -119,7 +119,7 @@ class CrystalPlanApp(wx.App):
         #Set it on top
         self.SetTopWindow(self.main)
         #Also, we show the q-space coverage window
-        frame_qspace_view.get_instance(self.main).Show()
+        # frame_qspace_view.get_instance(self.main).Show()
         return True
 
 
@@ -147,7 +147,7 @@ def launch_gui(inelastic, hb3a):
     #Create a StdOut wrapper
     global out_wrapper
     output_file_name = 'CrystalPlan_Log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt"
-    output_file_name = os.path.join(tempfile.gettempdir(), output_file_name) 
+    output_file_name = os.path.join(tempfile.gettempdir(), output_file_name)
     out_wrapper = OutWrapper(sys.stdout, output_file_name)
     sys.stdout = out_wrapper
 
